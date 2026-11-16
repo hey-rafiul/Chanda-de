@@ -1,0 +1,6 @@
+{
+  "name": "চান্দা দে — CHANDA DE",
+  "description": "3D open-world comedy simulation game set in fictional Chanda City, Bangladesh. Explore streets, interact with shops & vehicles, negotiate contributions, trigger cartoon destruction, escape police, and build a comedic business empire!",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
