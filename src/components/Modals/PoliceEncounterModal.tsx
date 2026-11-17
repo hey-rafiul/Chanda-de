@@ -87,6 +87,13 @@ const FUNNY_POLICE_NOTICES: FunnyPoliceNotice[] = [
   },
 ];
 
+function toBanglaDigits(num: number): string {
+  const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  return Math.max(0, Math.round(num))
+    .toString()
+    .replace(/\d/g, (d) => bn[Number(d)] ?? d);
+}
+
 export const PoliceEncounterModal: React.FC = () => {
   const closeModal = useGameStore((state) => state.closeModal);
   const playerStats = useGameStore((state) => state.playerStats);
@@ -96,6 +103,9 @@ export const PoliceEncounterModal: React.FC = () => {
     FUNNY_POLICE_NOTICES[policeState.noticeIndex % FUNNY_POLICE_NOTICES.length] ||
     FUNNY_POLICE_NOTICES[0];
 
+  const fineAmount = policeState.lastPoliceFine;
+  const fineBn = toBanglaDigits(fineAmount);
+
   const handleFinish = () => {
     soundManager.stopPoliceCaughtAudio();
     soundManager.playDialogueBlip(1.25);
@@ -103,98 +113,102 @@ export const PoliceEncounterModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/92">
-      <div className="relative w-full max-w-lg rounded-3xl bg-[#0B101E] border-2 border-red-500/90 shadow-2xl overflow-hidden flex flex-col max-h-[92dvh]">
+    <div className="fixed inset-0 z-50 pointer-events-none flex items-end justify-center sm:items-center sm:justify-start p-2.5 sm:p-5 sm:pt-20 sm:pb-14">
+      <div className="pointer-events-auto animate-police-notice relative w-full max-w-md sm:max-w-[395px] rounded-2xl sm:rounded-3xl bg-[#0B101E]/65 border-2 border-red-500/85 shadow-[0_14px_40px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col max-h-[50dvh] sm:max-h-[76dvh]">
         {/* Top Red/Blue Police Light Bar */}
-        <div className="h-2 w-full bg-gradient-to-r from-red-600 via-blue-500 to-red-600 shrink-0" />
+        <div className="h-1.5 sm:h-2 w-full bg-gradient-to-r from-red-600 via-blue-500 to-red-600 shrink-0" />
 
         {/* Header */}
-        <div className="flex items-center justify-between p-3.5 sm:p-4 bg-gradient-to-r from-red-700/35 via-slate-900 to-blue-900/35 border-b border-slate-800 shrink-0">
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-red-600 to-blue-600 border border-white/20 flex items-center justify-center text-white shadow-lg shrink-0">
-              <Siren className="w-5 h-5 sm:w-6 sm:h-6" />
+        <div className="flex items-center justify-between px-3 py-2.5 sm:p-3.5 bg-gradient-to-r from-red-700/30 via-slate-900/60 to-blue-900/30 border-b border-slate-700/60 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-red-600 to-blue-600 border border-white/20 flex items-center justify-center text-white shadow-lg shrink-0">
+              <Siren className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="font-black text-white text-sm sm:text-lg leading-tight">
-                  কোতোয়ালী থানা — গ্রেপ্তার নোটিশ!
-                </h2>
+            <div className="min-w-0">
+              <h2 className="font-black text-white text-xs sm:text-base leading-tight truncate">
+                কোতোয়ালী থানা — গ্রেপ্তার নোটিশ!
+              </h2>
+              <div className="text-[10px] sm:text-[11px] font-semibold text-sky-300 truncate">
+                {notice.squad}
               </div>
-              <div className="text-[11px] font-semibold text-sky-300">{notice.squad}</div>
             </div>
           </div>
 
-          <div className="-rotate-6 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border-2 border-rose-400 bg-rose-950/90 text-rose-200 font-black text-[10px] sm:text-[11px] tracking-wide shadow shrink-0">
+          <div className="animate-stamp-slam -rotate-6 px-2 py-0.5 rounded-lg border-2 border-rose-400 bg-rose-950/75 text-rose-200 font-black text-[10px] tracking-wide shadow shrink-0">
             ধরা খাইছে!
           </div>
         </div>
 
         {/* Body */}
-        <div className="p-4 sm:p-5 flex flex-col gap-3.5 overflow-y-auto no-scrollbar">
+        <div className="p-3 sm:p-4 flex flex-col gap-2.5 sm:gap-3 overflow-y-auto no-scrollbar">
           {/* Officer Card + Quote */}
-          <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-900/95 border border-slate-700/90 shadow-inner">
-            <div className="w-14 h-14 shrink-0 rounded-2xl bg-gradient-to-br from-blue-600/30 to-red-600/20 border-2 border-blue-400/50 flex items-center justify-center text-3xl shadow">
+          <div className="flex items-start gap-2.5 p-2.5 sm:p-3 rounded-xl bg-slate-900/58 border border-slate-700/60 shadow-inner">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl bg-gradient-to-br from-blue-600/30 to-red-600/20 border border-blue-400/50 flex items-center justify-center text-2xl shadow">
               {notice.avatar}
             </div>
-            <div className="flex flex-col text-left">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-black text-amber-400">{notice.officer} বললেন:</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30">
-                  কেস #৪২০-{playerStats.timesCaught}
+            <div className="flex flex-col text-left min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                <span className="text-[11px] sm:text-xs font-black text-amber-400">
+                  {notice.officer} বললেন:
+                </span>
+                <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30 tabular-nums">
+                  কেস #৪২০-{toBanglaDigits(playerStats.timesCaught)}
                 </span>
               </div>
-              <p className="text-sm text-slate-100 font-bangla leading-relaxed">
+              <p className="text-xs sm:text-[13px] text-slate-100 font-bangla leading-snug sm:leading-relaxed">
                 &ldquo;{notice.quote}&rdquo;
               </p>
             </div>
           </div>
 
           {/* Charge Sheet Receipt */}
-          <div className="rounded-2xl bg-slate-950/90 border border-slate-800 p-3.5 flex flex-col gap-2 text-xs">
-            <div className="flex items-center gap-1.5 font-black text-rose-400 border-b border-slate-800 pb-1.5">
-              <FileWarning className="w-4 h-4" />
-              <span>থানার হাস্যকর চার্জশিট ও রসিদ</span>
+          <div className="rounded-xl bg-slate-950/55 border border-slate-700/60 p-2.5 sm:p-3 flex flex-col gap-1.5 text-[11px] sm:text-xs">
+            <div className="flex items-center gap-1.5 font-black text-rose-400 border-b border-slate-800 pb-1">
+              <FileWarning className="w-3.5 h-3.5" />
+              <span>থানার চার্জশিট ও জরিমানার রসিদ</span>
             </div>
 
             <div className="flex items-start justify-between gap-2">
               <span className="text-slate-400 shrink-0">অভিযোগ:</span>
-              <span className="text-amber-300 font-bold text-right">{notice.charge}</span>
+              <span className="text-amber-300 font-bold text-right leading-tight">{notice.charge}</span>
             </div>
 
             <div className="flex items-center justify-between gap-2 tabular-nums">
               <span className="text-slate-400">থানায় জরিমানা কর্তন:</span>
-              <span className="text-rose-400 font-black">৳{policeState.lastPoliceFine}</span>
+              <span className="text-rose-400 font-black">৳{fineBn} ({fineAmount} টাকা)</span>
             </div>
 
             <div className="flex items-center justify-between gap-2 tabular-nums">
               <span className="text-slate-400 flex items-center gap-1">
-                <Award className="w-3.5 h-3.5 text-amber-400" />
+                <Award className="w-3 h-3 text-amber-400" />
                 <span>মোট ধরা খাওয়া:</span>
               </span>
-              <span className="text-white font-bold">{playerStats.timesCaught} বার</span>
+              <span className="text-white font-bold">{toBanglaDigits(playerStats.timesCaught)} বার</span>
             </div>
 
             <div className="flex items-center justify-between gap-2">
               <span className="text-slate-400 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                <span>বর্তমান অবস্থান:</span>
+                <MapPin className="w-3 h-3 text-emerald-400" />
+                <span>অবস্থান:</span>
               </span>
-              <span className="text-emerald-400 font-bold">কোতোয়ালী থানার সামনে (Safe Zone)</span>
+              <span className="text-emerald-400 font-bold text-right">কোতোয়ালী থানার সামনে</span>
             </div>
 
-            <div className="mt-1 pt-1.5 border-t border-dashed border-slate-800 text-[11px] text-slate-400 flex items-center justify-between gap-2">
-              <span>বিশেষ মন্তব্য:</span>
+            <div className="pt-1 border-t border-dashed border-slate-800 text-[10px] text-slate-400 flex items-center justify-between gap-2">
+              <span className="shrink-0">মন্তব্য:</span>
               <span className="text-sky-300 italic text-right">{notice.remark}</span>
             </div>
           </div>
+        </div>
 
-          {/* Requested Funny Leave Button */}
+        {/* Sticky Bottom Action Button Showing Exact Dynamic Fine Amount */}
+        <div className="p-2.5 sm:p-3.5 pt-1.5 bg-[#0B101E]/60 border-t border-slate-700/60 shrink-0">
           <button
             onClick={handleFinish}
-            className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm sm:text-base shadow-xl border-2 border-yellow-200/70 transition-all active:scale-95 flex items-center justify-center gap-2"
+            className="w-full py-2.5 sm:py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs sm:text-sm shadow-xl border-2 border-yellow-200/70 transition-transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer text-center leading-snug"
           >
-            <Banknote className="w-5 h-5 shrink-0" />
-            <span>আপনি ২৫০ টাকা রাখেন স্যার, আমারে ছাইরা দেন!</span>
+            <Banknote className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+            <span>{fineBn} টাকা দিয়ে ছাড়া পাওয়ার জন্য এখানে ক্লিক করুন</span>
           </button>
         </div>
       </div>

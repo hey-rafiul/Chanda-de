@@ -19,7 +19,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({ onOpenFullMap }) => {
 
   // Convert world [x, z] to centered radar % based on zoom level
   const toRadar = (wx: number, wz: number) => {
-    const span = 320 / zoom; // Expanded full city = 320m
+    const span = 460 / zoom; // Expanded full city = 460m
     const centerX = zoom === 1 ? 0 : playerPosition[0];
     const centerZ = zoom === 1 ? 0 : playerPosition[2];
     const px = 50 + ((wx - centerX) / span) * 100;
@@ -37,8 +37,10 @@ export const MiniMap: React.FC<MiniMapProps> = ({ onOpenFullMap }) => {
   const mainAxis = toRadar(0, 0);
   const ringNeg = toRadar(-50, -50);
   const ringPos = toRadar(50, 50);
-  const outerNeg = toRadar(-105, -105);
-  const outerPos = toRadar(105, 105);
+  const midNeg = toRadar(-105, -105);
+  const midPos = toRadar(105, 105);
+  const outerNeg = toRadar(-165, -165);
+  const outerPos = toRadar(165, 165);
 
   return (
     <div
@@ -77,19 +79,35 @@ export const MiniMap: React.FC<MiniMapProps> = ({ onOpenFullMap }) => {
           style={{ left: `${ringPos.x}%` }}
         />
         <div
-          className="absolute left-0 right-0 h-0.5 bg-slate-800/60"
+          className="absolute left-0 right-0 h-0.5 bg-slate-800/70"
+          style={{ top: `${midNeg.y}%` }}
+        />
+        <div
+          className="absolute left-0 right-0 h-0.5 bg-slate-800/70"
+          style={{ top: `${midPos.y}%` }}
+        />
+        <div
+          className="absolute top-0 bottom-0 w-0.5 bg-slate-800/70"
+          style={{ left: `${midNeg.x}%` }}
+        />
+        <div
+          className="absolute top-0 bottom-0 w-0.5 bg-slate-800/70"
+          style={{ left: `${midPos.x}%` }}
+        />
+        <div
+          className="absolute left-0 right-0 h-0.5 bg-slate-800/50"
           style={{ top: `${outerNeg.y}%` }}
         />
         <div
-          className="absolute left-0 right-0 h-0.5 bg-slate-800/60"
+          className="absolute left-0 right-0 h-0.5 bg-slate-800/50"
           style={{ top: `${outerPos.y}%` }}
         />
         <div
-          className="absolute top-0 bottom-0 w-0.5 bg-slate-800/60"
+          className="absolute top-0 bottom-0 w-0.5 bg-slate-800/50"
           style={{ left: `${outerNeg.x}%` }}
         />
         <div
-          className="absolute top-0 bottom-0 w-0.5 bg-slate-800/60"
+          className="absolute top-0 bottom-0 w-0.5 bg-slate-800/50"
           style={{ left: `${outerPos.x}%` }}
         />
 

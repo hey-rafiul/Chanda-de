@@ -68,7 +68,10 @@ export const CharacterPreview3D: React.FC<CharacterPreview3DProps> = ({
 
     const scene = new THREE.Scene();
     const pmrem = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    const roomEnv = new RoomEnvironment();
+    const envTarget = pmrem.fromScene(roomEnv, 0.04);
+    scene.environment = envTarget.texture;
+    roomEnv.dispose();
     pmrem.dispose();
 
     const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 30);
@@ -174,6 +177,7 @@ export const CharacterPreview3D: React.FC<CharacterPreview3DProps> = ({
 
       disposeCharacterRig(rigRef.current);
       rigRef.current = null;
+      envTarget.dispose();
       discGeo.dispose();
       discMat.dispose();
       renderer.dispose();

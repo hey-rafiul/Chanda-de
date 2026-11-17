@@ -17,8 +17,6 @@ import {
   DeliveryJob,
   ShopBrawlState,
   HeroExpression,
-  WorldNPCData,
-  NPCInteractionAction,
   EquippedOutfit,
 } from '../types/game';
 import {
@@ -40,15 +38,10 @@ import { soundManager } from '../audio/soundManager';
 const STORAGE_KEY = 'chanda_de_save_v2';
 const LEGACY_STORAGE_KEY = 'chanda_de_save_v1';
 
-const isMobileDevice =
-  typeof window !== 'undefined' &&
-  (window.innerWidth < 768 || /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent));
-
 export interface GameState {
   // Navigation & UI
   gameMode: 'menu' | 'playing' | 'paused';
   activeModal:
-    | 'negotiation'
     | 'vehicle'
     | 'business'
     | 'repair'
@@ -60,11 +53,8 @@ export interface GameState {
     | 'inventory'
     | 'economy'
     | 'achievements'
-    | 'npc_dialogue'
     | null;
-  selectedShop: ShopData | null;
   selectedVehicle: VehicleData | null;
-  selectedNPC: WorldNPCData | null;
   heroExpression: HeroExpression;
   notificationMessage: {
     title: string;
@@ -105,7 +95,6 @@ export interface GameState {
   demandedChandaShopIds: string[];
   shopCooldowns: Record<string, number>;
   vehicleCooldowns: Record<string, number>;
-  npcCooldowns: Record<string, number>;
   policeState: {
     status: 'idle' | 'arriving' | 'chasing' | 'caught';
     displaySec: number;
@@ -119,11 +108,8 @@ export interface GameState {
   setGameMode: (mode: 'menu' | 'playing' | 'paused') => void;
   openModal: (modal: GameState['activeModal']) => void;
   closeModal: () => void;
-  setSelectedShop: (shop: ShopData | null) => void;
   setSelectedVehicle: (vehicle: VehicleData | null) => void;
-  setSelectedNPC: (npc: WorldNPCData | null) => void;
   setHeroExpression: (expr: HeroExpression) => void;
-  performNPCAction: (npc: WorldNPCData, action: NPCInteractionAction) => void;
   notify: (
     title: string,
     subtitle: string,
@@ -165,12 +151,9 @@ export interface GameState {
   // Shops, Proximity Callout & Brawl
   markShopVisited: (shopId: string) => void;
   recordNegotiationWin: (shopId: string) => void;
-  setShopCooldown: (shopId: string, durationMs?: number) => void;
   setVehicleCooldown: (vehicleId: string, durationMs?: number) => void;
   triggerChandaCallout: (shopNameBn: string, shopId?: string) => void;
-  startShopBrawl: (shopId: string) => void;
   damageShopBrawl: (shopId: string, keeperDmg: number, resistanceDmg: number, hitWord?: string) => void;
-  clearBrawl: () => void;
 
   // Deliveries
   startDeliveryJob: (fromNameBn?: string) => DeliveryJob | null;
@@ -238,7 +221,7 @@ const initialSettings: GameSettings = {
   musicEnabled: true,
   sfxVolume: 0.8,
   musicVolume: 0.45,
-  graphicsQuality: isMobileDevice ? 'low' : 'medium',
+  graphicsQuality: 'medium',
   showMinimap: true,
   controlsHelp: true,
 };
@@ -278,12 +261,12 @@ const defaultEquippedOutfit: EquippedOutfit = {
   necklace: 'necklace_none',
 };
 
+let notifyTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
 export const useGameStore = create<GameState>((set, get) => ({
   gameMode: 'menu',
   activeModal: null,
-  selectedShop: null,
   selectedVehicle: null,
-  selectedNPC: null,
   heroExpression: 'neutral',
   notificationMessage: null,
   screenShakeTick: 0,
@@ -317,7 +300,6 @@ export const useGameStore = create<GameState>((set, get) => ({
   demandedChandaShopIds: [],
   shopCooldowns: {},
   vehicleCooldowns: {},
-  npcCooldowns: {},
   policeState: {
     status: 'idle',
     displaySec: 0,
@@ -349,101 +331,25 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   closeModal: () => {
-    set({ activeModal: null, selectedShop: null, selectedVehicle: null, selectedNPC: null });
-  },
-
-  setSelectedShop: (shop) => {
-    set({ selectedShop: shop });
+    set({ activeModal: null, selectedVehicle: null });
   },
 
   setSelectedVehicle: (vehicle) => {
     set({ selectedVehicle: vehicle });
   },
 
-  setSelectedNPC: (npc) => {
-    set({ selectedNPC: npc });
-  },
-
   setHeroExpression: (expr) => {
     set({ heroExpression: expr });
   },
 
-  performNPCAction: (npc, action) => {
-    const cooldownKey = `${npc.id}_${action.id}`;
-    const expiry = get().npcCooldowns[cooldownKey] || 0;
-    if (action.type !== 'chat' && action.type !== 'ride_shortcut' && expiry > Date.now()) {
-      const rem = Math.ceil((expiry - Date.now()) / 1000);
-      get().notify('একটু অপেক্ষা করুন!', `${npc.nameBn}-এর সাথে এই কাজটি আবার ${rem} সেকেন্ড পর করা যাবে।`, 'info');
-      return;
-    }
-
-    if (action.type === 'ride_shortcut') {
-      const veh = get().vehicles.find((v) => v.id === npc.linkedVehicleId);
-      if (veh) {
-        set({ selectedNPC: null, selectedVehicle: veh, activeModal: 'vehicle' });
-        soundManager.playRickshawBell();
-        return;
-      }
-    }
-
-    if (action.cost && action.cost > 0) {
-      const ok = get().spendMoney(action.cost, `${npc.name}: ${action.id}`, `${npc.nameBn}: ${action.labelBn}`, 'shop');
-      if (!ok) return;
-    }
-
-    if (action.type === 'tea_heal') {
-      get().adjustReputation(8);
-      get().setHeroExpression('happy');
-      soundManager.playDialogueBlip(1.4);
-      get().notify('গরম চায়ে মন ভালো হলো!', 'সম্মান +৮% ও XP বেড়েছে!', 'success');
-    } else if (action.type === 'snack_tip') {
-      get().adjustReputation(6);
-      get().setHeroExpression('happy');
-      soundManager.playDialogueBlip(1.3);
-      get().notify('খুশি হয়েছেন!', `${npc.nameBn} আপনার ব্যবহারে সন্তুষ্ট হয়েছেন!`, 'success');
-    } else if (action.type === 'police_bribe') {
-      const stars = get().playerStats.wantedStars;
-      if (stars > 0) {
-        get().setWantedStars(stars - 1);
-      }
-      get().setHeroExpression('thinking');
-      get().notify('মীমাংসা সম্পন্ন!', `${npc.nameBn} খুশি হয়ে বিষয়টি মিটমাট করেছেন!`, 'success');
-    } else if (action.type === 'boss_mission') {
-      if (action.rewardMoney) {
-        get().addMoney(action.rewardMoney, `VIP Deal: ${npc.name}`, `${npc.nameBn}-এর ভিআইপি ডিল`, 'mission');
-      }
-      get().setHeroExpression('laugh');
-    } else if (action.type === 'gossip_rep') {
-      get().adjustReputation(5);
-      get().setHeroExpression('happy');
-      soundManager.playDialogueBlip(1.25);
-      get().notify('সুন্দর আড্ডা!', 'এলাকায় আপনার সুনাম +৫% বেড়েছে!', 'success');
-    } else {
-      get().setHeroExpression('happy');
-      soundManager.playDialogueBlip(1.2);
-    }
-
-    if (action.rewardXP) {
-      get().addXP(action.rewardXP);
-    }
-
-    if (action.type !== 'chat' && action.type !== 'ride_shortcut') {
-      set((state) => ({
-        npcCooldowns: {
-          ...state.npcCooldowns,
-          [cooldownKey]: Date.now() + 45000,
-        },
-      }));
-    }
-    get().saveGame();
-  },
-
   notify: (title, subtitle, type = 'info') => {
+    if (notifyTimeoutId !== null) {
+      clearTimeout(notifyTimeoutId);
+    }
     set({ notificationMessage: { title, subtitle, type } });
-    setTimeout(() => {
-      if (get().notificationMessage?.title === title) {
-        set({ notificationMessage: null });
-      }
+    notifyTimeoutId = setTimeout(() => {
+      notifyTimeoutId = null;
+      set({ notificationMessage: null });
     }, 3800);
   },
 
@@ -771,15 +677,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().saveGame();
   },
 
-  setShopCooldown: (shopId, durationMs = 30000) => {
-    set((state) => ({
-      shopCooldowns: {
-        ...state.shopCooldowns,
-        [shopId]: Date.now() + durationMs,
-      },
-    }));
-  },
-
   setVehicleCooldown: (vehicleId, durationMs = 55000) => {
     set((state) => ({
       vehicleCooldowns: {
@@ -810,43 +707,21 @@ export const useGameStore = create<GameState>((set, get) => ({
     }, 3200);
   },
 
-  startShopBrawl: (shopId) => {
-    const { shops, activeEvent, activeBrawl } = get();
-    if (activeBrawl && activeBrawl.shopId === shopId && !activeBrawl.surrendered) return;
-    const shop = shops.find((s) => s.id === shopId);
-    if (!shop) return;
-
-    const eventMult = activeEvent?.effect === 'double_chanda' ? 1.5 : 1.0;
-    const rewardMoney = Math.round(shop.baseContribution * 1.4 * eventMult);
-
-    soundManager.playVangchurVoice();
-    set({
-      activeModal: null,
-      selectedShop: null,
-      activeBrawl: {
-        shopId: shop.id,
-        shopNameBn: shop.nameBn,
-        ownerName: shop.ownerName,
-        keeperHp: 100,
-        maxKeeperHp: 100,
-        shopResistance: 100,
-        maxResistance: 100,
-        surrendered: false,
-        rewardMoney,
-      },
-    });
-    get().notify(
-      `মারামারি ও ভাঙচুর শুরু! (${shop.nameBn})`,
-      '[F] চেপে দোকানদারকে মারুন ও দোকানের জিনিস ভাঙুন!',
-      'danger'
-    );
-    get().reportVangchurToPolice(shop.id);
-  },
-
   damageShopBrawl: (shopId, keeperDmg, resistanceDmg, hitWord) => {
     const state = get();
     let brawl = state.activeBrawl;
     if (!brawl || brawl.shopId !== shopId) {
+      const cooldownUntil = state.shopCooldowns[shopId] || 0;
+      const remSec = Math.ceil((cooldownUntil - Date.now()) / 1000);
+      if (remSec > 0) {
+        get().notify(
+          'দোকানদার একটু আগেই টাকা দিয়েছে!',
+          `${remSec} সেকেন্ড পর আবার এই দোকানে হানা দিতে পারবেন।`,
+          'info'
+        );
+        return;
+      }
+
       const shop = state.shops.find((s) => s.id === shopId);
       if (!shop) return;
       const eventMult = state.activeEvent?.effect === 'double_chanda' ? 1.5 : 1.0;
@@ -918,10 +793,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  clearBrawl: () => {
-    set({ activeBrawl: null });
-  },
-
   startDeliveryJob: (fromNameBn) => {
     if (get().activeDelivery) {
       get().notify('আগে বর্তমান ডেলিভারি শেষ করুন!', get().activeDelivery!.toZoneNameBn, 'warning');
@@ -973,7 +844,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   cancelDeliveryJob: () => {
     set({ activeDelivery: null });
-    get().notify('ডেলিভারি বাতিল করা হয়েছে', 'নতুন পার্সেল চাইলে আবার কথা বলুন।', 'info');
+    get().notify('ডেলিভারি বাতিল করা হয়েছে', 'নতুন পার্সেল চাইলে ডেলিভারি ভ্যানের সামনে গিয়ে [E] চাপুন।', 'info');
   },
 
   damageObject: (id, damage = 45) => {
@@ -1458,23 +1329,74 @@ export const useGameStore = create<GameState>((set, get) => ({
         ...(data.equipped || {}),
       };
 
+      const savedBusinesses: BusinessItem[] = Array.isArray(data.businesses)
+        ? INITIAL_BUSINESS_ITEMS.map((base) => {
+            const match = data.businesses.find((b: BusinessItem) => b.id === base.id);
+            return match
+              ? {
+                  ...base,
+                  owned: Boolean(match.owned),
+                  level: match.level ?? base.level,
+                  incomePerMinute: match.incomePerMinute ?? base.incomePerMinute,
+                  upgradeCost: match.upgradeCost ?? base.upgradeCost,
+                }
+              : { ...base };
+          })
+        : INITIAL_BUSINESS_ITEMS.map((b) => ({ ...b }));
+
+      const savedMissions: Mission[] = Array.isArray(data.missions)
+        ? INITIAL_MISSIONS.map((base) => {
+            const match = data.missions.find((m: Mission) => m.id === base.id);
+            return match
+              ? {
+                  ...base,
+                  currentCount: match.currentCount ?? 0,
+                  completed: Boolean(match.completed),
+                  claimed: Boolean(match.claimed),
+                }
+              : { ...base };
+          })
+        : INITIAL_MISSIONS.map((m) => ({ ...m }));
+
+      const savedAchievements: Achievement[] = Array.isArray(data.achievements)
+        ? INITIAL_ACHIEVEMENTS.map((base) => {
+            const match = data.achievements.find((a: Achievement) => a.id === base.id);
+            return match
+              ? {
+                  ...base,
+                  unlocked: Boolean(match.unlocked),
+                  claimed: Boolean(match.claimed),
+                }
+              : { ...base };
+          })
+        : INITIAL_ACHIEVEMENTS.map((a) => ({ ...a }));
+
       set({
         playerStats: mergedStats,
         playerPosition: Array.isArray(data.playerPosition) ? data.playerPosition : [0, 0, 12],
         playerRotation: typeof data.playerRotation === 'number' ? data.playerRotation : 0,
         equipped: mergedEquipped,
-        businesses: data.businesses || INITIAL_BUSINESS_ITEMS.map((b) => ({ ...b })),
+        businesses: savedBusinesses,
         customizations: savedCustomizations,
         destructibles: savedDestructibles,
-        missions: data.missions || INITIAL_MISSIONS.map((m) => ({ ...m })),
-        inventory: data.inventory || INITIAL_INVENTORY.map((i) => ({ ...i })),
-        achievements: data.achievements || INITIAL_ACHIEVEMENTS.map((a) => ({ ...a })),
+        missions: savedMissions,
+        inventory: Array.isArray(data.inventory) ? data.inventory : INITIAL_INVENTORY.map((i) => ({ ...i })),
+        achievements: savedAchievements,
         visitedShopIds: Array.isArray(data.visitedShopIds) ? data.visitedShopIds : [],
         transactions: Array.isArray(data.transactions) ? data.transactions : [...initialTransactions],
         settings: mergedSettings,
         gameTimeMinutes: data.gameTimeMinutes || 540,
         timeOfDay: data.timeOfDay || 'morning',
-        gameMode: 'playing',
+        activeModal: null,
+        activeBrawl: null,
+        policeState: {
+          status: 'idle',
+          displaySec: 0,
+          lastShopId: null,
+          pendingShopId: null,
+          lastPoliceFine: 0,
+          noticeIndex: 0,
+        },
       });
 
       soundManager.setSettings(
@@ -1483,6 +1405,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         mergedSettings.sfxVolume,
         mergedSettings.musicVolume
       );
+      get().setGameMode('playing');
       soundManager.playMissionComplete();
       get().notify('খেলার সেভ ফাইল লোড হয়েছে!', 'চান্দা সিটিতে আবার স্বাগতম!', 'success');
       return true;
@@ -1498,14 +1421,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       localStorage.removeItem(LEGACY_STORAGE_KEY);
     } catch {}
     set({
-      gameMode: 'playing',
       playerStats: { ...initialPlayerStats },
       playerPosition: [0, 0, 12],
       playerRotation: 0,
       currentZoneId: 'bazaar',
       equipped: { ...defaultEquippedOutfit },
       heroExpression: 'neutral',
-      selectedNPC: null,
       businesses: INITIAL_BUSINESS_ITEMS.map((b) => ({ ...b })),
       customizations: INITIAL_CUSTOMIZATION.map((c) => ({ ...c })),
       destructibles: INITIAL_DESTRUCTIBLE_OBJECTS.map((d) => ({ ...d })),
@@ -1516,7 +1437,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       demandedChandaShopIds: [],
       shopCooldowns: {},
       vehicleCooldowns: {},
-      npcCooldowns: {},
       policeState: {
         status: 'idle',
         displaySec: 0,
@@ -1540,6 +1460,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     soundManager.stopShopChandaAudio();
     soundManager.stopPoliceCaughtAudio();
     soundManager.setRain(false);
+    get().setGameMode('playing');
     get().notify('নতুন খেলা শুরু হলো!', 'চান্দা সিটির নতুন যাত্রা শুভ হোক!', 'info');
   },
 }));

@@ -8,7 +8,6 @@ import { MainMenu } from './components/MainMenu';
 import { ChandaCityScene, SceneInteractionTarget } from './game/three/ChandaCityScene';
 
 // Modals
-import { NegotiationModal } from './components/Modals/NegotiationModal';
 import { VehicleModal } from './components/Modals/VehicleModal';
 import { DestructionRepairModal } from './components/Modals/DestructionRepairModal';
 import { BusinessModal } from './components/Modals/BusinessModal';
@@ -21,7 +20,6 @@ import { PauseMenu } from './components/Modals/PauseMenu';
 import { InventoryModal } from './components/Modals/InventoryModal';
 import { EconomyModal } from './components/Modals/EconomyModal';
 import { AchievementsModal } from './components/Modals/AchievementsModal';
-import { NPCDialogueModal } from './components/Modals/NPCDialogueModal';
 
 export default function App() {
   const gameMode = useGameStore((state) => state.gameMode);
@@ -32,13 +30,16 @@ export default function App() {
 
   const sceneRef = useRef<ChandaCityScene | null>(null);
   const [nearbyTarget, setNearbyTarget] = useState<SceneInteractionTarget | null>(null);
+  const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
 
-  // ESC toggles modals or Pause menu
+  // ESC toggles modals, command menu, or Pause menu
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (activeModal) {
           closeModal();
+        } else if (isCommandMenuOpen) {
+          setIsCommandMenuOpen(false);
         } else if (gameMode === 'playing') {
           setGameMode('paused');
         } else if (gameMode === 'paused') {
@@ -48,7 +49,7 @@ export default function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeModal, gameMode, closeModal, setGameMode]);
+  }, [activeModal, isCommandMenuOpen, gameMode, closeModal, setGameMode]);
 
   const handleTeleport = useCallback((position: [number, number, number]) => {
     sceneRef.current?.teleportPlayer(position);
@@ -85,8 +86,16 @@ export default function App() {
       {/* Modern HUD Layer */}
       <GameHUD
         nearbyTarget={nearbyTarget}
-        onOpenFullMap={() => openModal('map')}
-        onOpenEconomy={() => openModal('economy')}
+        isMenuOpen={isCommandMenuOpen}
+        onToggleMenu={() => setIsCommandMenuOpen((v) => !v)}
+        onOpenFullMap={() => {
+          setIsCommandMenuOpen(false);
+          openModal('map');
+        }}
+        onOpenEconomy={() => {
+          setIsCommandMenuOpen(false);
+          openModal('economy');
+        }}
         onInteract={handleInteract}
         onSmash={handleSmash}
       />
@@ -94,12 +103,13 @@ export default function App() {
       {/* Mobile Touch Controls Layer */}
       <MobileControls
         sceneRef={sceneRef}
-        onInteract={handleInteract}
         onSmash={handleSmash}
       />
 
-      {/* Collapsible Bottom Dock */}
+      {/* Top-Anchored Command Menu Overlay */}
       <BottomDock
+        isOpen={isCommandMenuOpen}
+        onClose={() => setIsCommandMenuOpen(false)}
         onOpenModal={openModal}
         onPause={() => setGameMode('paused')}
       />
@@ -108,7 +118,6 @@ export default function App() {
       {gameMode === 'paused' && !activeModal && <PauseMenu />}
 
       {/* Interactive Gameplay Modals */}
-      {activeModal === 'negotiation' && <NegotiationModal />}
       {activeModal === 'vehicle' && <VehicleModal onTeleport={handleTeleport} />}
       {activeModal === 'repair' && <DestructionRepairModal />}
       {activeModal === 'business' && <BusinessModal />}
@@ -120,7 +129,6 @@ export default function App() {
       {activeModal === 'inventory' && <InventoryModal />}
       {activeModal === 'economy' && <EconomyModal />}
       {activeModal === 'achievements' && <AchievementsModal />}
-      {activeModal === 'npc_dialogue' && <NPCDialogueModal />}
     </div>
   );
 }

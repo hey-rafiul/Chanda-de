@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useGameStore, GameState } from '../../stores/gameStore';
 import {
   ScrollText,
@@ -7,188 +7,223 @@ import {
   Shirt,
   Map,
   Settings,
-  ChevronDown,
-  ChevronUp,
   Volume2,
   VolumeX,
   Backpack,
   Wallet,
   Trophy,
   Pause,
+  X,
 } from 'lucide-react';
 import { soundManager } from '../../audio/soundManager';
 
 interface BottomDockProps {
+  isOpen: boolean;
+  onClose: () => void;
   onOpenModal: (modal: GameState['activeModal']) => void;
   onPause: () => void;
 }
 
-export const BottomDock: React.FC<BottomDockProps> = ({ onOpenModal, onPause }) => {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+export const BottomDock: React.FC<BottomDockProps> = ({
+  isOpen,
+  onClose,
+  onOpenModal,
+  onPause,
+}) => {
   const missions = useGameStore((state) => state.missions);
   const achievements = useGameStore((state) => state.achievements);
   const destructibles = useGameStore((state) => state.destructibles);
   const settings = useGameStore((state) => state.settings);
   const updateSettings = useGameStore((state) => state.updateSettings);
 
+  if (!isOpen) return null;
+
   const claimableMissions = missions.filter((m) => m.completed && !m.claimed).length;
   const claimableAchievements = achievements.filter((a) => a.unlocked && !a.claimed).length;
   const damagedObjectsCount = destructibles.filter((d) => d.isDestroyed || d.health < d.maxHealth).length;
 
   const toggleSound = () => {
+    soundManager.playDialogueBlip(1.05);
     const next = !settings.soundEnabled;
     updateSettings({ soundEnabled: next, musicEnabled: next });
   };
 
+  const handleOpen = (modal: GameState['activeModal']) => {
+    soundManager.playDialogueBlip(1.1);
+    onClose();
+    onOpenModal(modal);
+  };
+
+  const primaryItems: {
+    id: NonNullable<GameState['activeModal']>;
+    icon: React.ComponentType<{ className?: string }>;
+    iconColor: string;
+    tileBg: string;
+    label: string;
+    badge?: number;
+    badgeColor?: string;
+  }[] = [
+    {
+      id: 'missions',
+      icon: ScrollText,
+      iconColor: 'text-amber-300',
+      tileBg: 'from-amber-500/20 to-amber-950/40 border-amber-500/35',
+      label: 'মিশন',
+      badge: claimableMissions,
+      badgeColor: 'bg-amber-400 text-slate-950',
+    },
+    {
+      id: 'business',
+      icon: Building2,
+      iconColor: 'text-emerald-300',
+      tileBg: 'from-emerald-500/20 to-emerald-950/40 border-emerald-500/35',
+      label: 'ব্যবসা',
+    },
+    {
+      id: 'repair',
+      icon: Wrench,
+      iconColor: 'text-orange-300',
+      tileBg: 'from-orange-500/20 to-orange-950/40 border-orange-500/35',
+      label: 'মেরামত',
+      badge: damagedObjectsCount,
+      badgeColor: 'bg-orange-500 text-white',
+    },
+    {
+      id: 'customization',
+      icon: Shirt,
+      iconColor: 'text-purple-300',
+      tileBg: 'from-purple-500/20 to-purple-950/40 border-purple-500/35',
+      label: 'পোশাক',
+    },
+    {
+      id: 'inventory',
+      icon: Backpack,
+      iconColor: 'text-cyan-300',
+      tileBg: 'from-cyan-500/20 to-cyan-950/40 border-cyan-500/35',
+      label: 'ব্যাগ',
+    },
+    {
+      id: 'economy',
+      icon: Wallet,
+      iconColor: 'text-yellow-300',
+      tileBg: 'from-yellow-500/20 to-yellow-950/40 border-yellow-500/35',
+      label: 'হিসাব',
+    },
+    {
+      id: 'achievements',
+      icon: Trophy,
+      iconColor: 'text-pink-300',
+      tileBg: 'from-pink-500/20 to-pink-950/40 border-pink-500/35',
+      label: 'অর্জন',
+      badge: claimableAchievements,
+      badgeColor: 'bg-pink-500 text-white',
+    },
+    {
+      id: 'map',
+      icon: Map,
+      iconColor: 'text-sky-300',
+      tileBg: 'from-sky-500/20 to-sky-950/40 border-sky-500/35',
+      label: 'মানচিত্র',
+    },
+  ];
+
   return (
-    <div
-      className="fixed left-1/2 -translate-x-1/2 z-30 transition-all duration-300 ease-out flex flex-col items-center pointer-events-none"
-      style={{
-        bottom: isCollapsed ? '-76px' : 'max(10px, env(safe-area-inset-bottom))',
-        width: 'min(960px, 96vw)',
-      }}
-    >
-      {/* Collapse Toggle Tab */}
-      <button
+    <div className="fixed inset-0 z-40">
+      {/* Click-outside Scrim */}
+      <div
         onClick={() => {
-          soundManager.playDialogueBlip(1.1);
-          setIsCollapsed(!isCollapsed);
+          soundManager.playDialogueBlip(0.95);
+          onClose();
         }}
-        className="pointer-events-auto mb-1 px-3 sm:px-3.5 py-1 rounded-full bg-[#0B101E]/95 border border-slate-700 text-slate-300 hover:text-white shadow-lg text-[10px] sm:text-[11px] font-semibold flex items-center gap-1.5 transition-transform active:scale-95 hover:border-amber-400"
-      >
-        {isCollapsed ? (
-          <>
-            <ChevronUp className="w-3.5 h-3.5 text-amber-400" />
-            <span>মেনু খুলুন</span>
-          </>
-        ) : (
-          <>
-            <ChevronDown className="w-3.5 h-3.5 text-amber-400" />
-            <span>মেনু লুকান</span>
-          </>
-        )}
-      </button>
+        className="absolute inset-0 bg-slate-950/40"
+      />
 
-      {/* Main Dock Container */}
-      <div className="pointer-events-auto w-full px-2 sm:px-2.5 py-1.5 rounded-2xl bg-[#0B101E]/95 border border-slate-700/90 shadow-2xl flex items-center justify-start sm:justify-between gap-1 sm:gap-1.5 overflow-x-auto touch-pan-x no-scrollbar">
-        <DockButton
-          icon={ScrollText}
-          iconColor="text-amber-400"
-          label="মিশন"
-          badge={claimableMissions}
-          badgeColor="bg-amber-500 text-slate-950"
-          onClick={() => onOpenModal('missions')}
-        />
-        <DockButton
-          icon={Building2}
-          iconColor="text-emerald-400"
-          label="ব্যবসা"
-          onClick={() => onOpenModal('business')}
-        />
-        <DockButton
-          icon={Wrench}
-          iconColor="text-orange-400"
-          label="মেরামত"
-          badge={damagedObjectsCount}
-          badgeColor="bg-orange-600 text-white"
-          onClick={() => onOpenModal('repair')}
-        />
-        <DockButton
-          icon={Shirt}
-          iconColor="text-purple-400"
-          label="পোশাক"
-          onClick={() => onOpenModal('customization')}
-        />
-        <DockButton
-          icon={Backpack}
-          iconColor="text-cyan-400"
-          label="ব্যাগ"
-          onClick={() => onOpenModal('inventory')}
-        />
-        <DockButton
-          icon={Wallet}
-          iconColor="text-yellow-400"
-          label="হিসাব"
-          onClick={() => onOpenModal('economy')}
-        />
-        <DockButton
-          icon={Trophy}
-          iconColor="text-pink-400"
-          label="অর্জন"
-          badge={claimableAchievements}
-          badgeColor="bg-pink-500 text-white"
-          onClick={() => onOpenModal('achievements')}
-        />
-        <DockButton
-          icon={Map}
-          iconColor="text-blue-400"
-          label="মানচিত্র"
-          onClick={() => onOpenModal('map')}
-        />
+      {/* Top-Anchored Unique Command Menu (Mobile + Desktop) */}
+      <div className="absolute top-11 sm:top-14 right-2 sm:right-4 left-2 sm:left-auto flex justify-end pointer-events-none">
+        <div className="pointer-events-auto animate-toast-drop w-full max-w-md sm:w-[410px] rounded-2xl bg-[#0B101E]/98 border-2 border-amber-500/55 shadow-[0_18px_50px_rgba(0,0,0,0.85)] overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-3.5 py-2.5 bg-gradient-to-r from-amber-500/15 via-slate-900 to-slate-900 border-b border-slate-800">
+            <div className="flex items-center gap-2">
+              <span className="font-arcade text-base text-amber-400 tracking-wider leading-none">
+                COMMAND
+              </span>
+              <span className="text-xs sm:text-sm font-bold text-white">সিটি কমান্ড মেনু</span>
+            </div>
+            <button
+              onClick={() => {
+                soundManager.playDialogueBlip(0.95);
+                onClose();
+              }}
+              className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] sm:text-xs font-bold flex items-center gap-1 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5 text-amber-400" />
+              <span>বন্ধ</span>
+            </button>
+          </div>
 
-        <div className="w-px h-8 bg-slate-800 mx-0.5 hidden sm:block" />
+          {/* All 11 Actions Visible Simultaneously in 4-Column Grid */}
+          <div className="p-2.5 sm:p-3 grid grid-cols-4 gap-2">
+            {primaryItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleOpen(item.id)}
+                  className={`relative py-2.5 px-1.5 rounded-xl bg-gradient-to-b ${item.tileBg} border text-white flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-md cursor-pointer`}
+                >
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span
+                      className={`absolute -top-1.5 -right-1 px-1.5 py-0.5 rounded-full font-black text-[9px] leading-none shadow tabular-nums ${item.badgeColor}`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                  <Icon className={`w-5 h-5 ${item.iconColor}`} />
+                  <span className="text-[11px] font-bold leading-none whitespace-nowrap">
+                    {item.label}
+                  </span>
+                </button>
+              );
+            })}
 
-        <button
-          onClick={toggleSound}
-          className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/70 text-slate-300 hover:text-white transition-colors flex-shrink-0"
-          title="সাউন্ড চালু / বন্ধ"
-        >
-          {settings.soundEnabled ? (
-            <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
-          ) : (
-            <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500" />
-          )}
-        </button>
+            <button
+              onClick={toggleSound}
+              className={`py-2.5 px-1.5 rounded-xl border flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform cursor-pointer ${
+                settings.soundEnabled
+                  ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
+                  : 'bg-slate-900 border-slate-700 text-slate-400'
+              }`}
+            >
+              {settings.soundEnabled ? (
+                <Volume2 className="w-5 h-5" />
+              ) : (
+                <VolumeX className="w-5 h-5" />
+              )}
+              <span className="text-[11px] font-bold leading-none">সাউন্ড</span>
+            </button>
 
-        <button
-          onClick={() => onOpenModal('settings')}
-          className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/70 text-slate-300 hover:text-white transition-colors flex-shrink-0"
-          title="সেটিংস"
-        >
-          <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300" />
-        </button>
+            <button
+              onClick={() => handleOpen('settings')}
+              className="py-2.5 px-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform cursor-pointer"
+            >
+              <Settings className="w-5 h-5 text-slate-300" />
+              <span className="text-[11px] font-bold leading-none">সেটিংস</span>
+            </button>
 
-        <button
-          onClick={onPause}
-          className="p-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 transition-colors flex-shrink-0"
-          title="বিরতি (ESC)"
-        >
-          <Pause className="w-4 h-4 sm:w-5 sm:h-5" />
-        </button>
+            <button
+              onClick={() => {
+                soundManager.playDialogueBlip(1.0);
+                onClose();
+                onPause();
+              }}
+              className="col-span-2 py-2.5 px-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-400/50 text-amber-200 flex items-center justify-center gap-1.5 active:scale-95 transition-transform cursor-pointer"
+            >
+              <Pause className="w-4 h-4 text-amber-400" />
+              <span className="text-[11px] sm:text-xs font-black">খেলা বিরতি (Pause)</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
-
-interface DockButtonProps {
-  icon: React.ComponentType<{ className?: string }>;
-  iconColor: string;
-  label: string;
-  badge?: number;
-  badgeColor?: string;
-  onClick: () => void;
-}
-
-const DockButton: React.FC<DockButtonProps> = ({
-  icon: Icon,
-  iconColor,
-  label,
-  badge = 0,
-  badgeColor = 'bg-amber-500 text-slate-950',
-  onClick,
-}) => (
-  <button
-    onClick={onClick}
-    className="relative min-w-[52px] sm:min-w-[64px] py-1.5 px-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/60 hover:border-amber-400/80 text-white flex flex-col items-center justify-center gap-0.5 transition-colors flex-shrink-0"
-  >
-    {badge > 0 && (
-      <span
-        className={`absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full font-black text-[9px] shadow tabular-nums ${badgeColor}`}
-      >
-        {badge}
-      </span>
-    )}
-    <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconColor}`} />
-    <span className="text-[10px] font-bold whitespace-nowrap">{label}</span>
-  </button>
-);

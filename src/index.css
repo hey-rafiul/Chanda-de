@@ -54,6 +54,45 @@
   animation: cartoon-shake 0.25s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
+/* Police Notice & UI Entrance Animations */
+@keyframes police-notice-enter {
+  0% { opacity: 0; transform: translate3d(0, 26px, 0) scale(0.84) rotate(-1.5deg); }
+  65% { opacity: 1; transform: translate3d(0, -4px, 0) scale(1.02) rotate(0.4deg); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+}
+
+.animate-police-notice {
+  animation: police-notice-enter 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes stamp-slam {
+  0% { opacity: 0; transform: scale(2.4) rotate(-18deg); }
+  70% { opacity: 1; transform: scale(0.92) rotate(-5deg); }
+  100% { opacity: 1; transform: scale(1) rotate(-6deg); }
+}
+
+.animate-stamp-slam {
+  animation: stamp-slam 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
+}
+
+@keyframes toast-drop {
+  0% { opacity: 0; transform: translate3d(0, -10px, 0) scale(0.96); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+.animate-toast-drop {
+  animation: toast-drop 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes dock-pop {
+  0% { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.97); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+.animate-dock-pop {
+  animation: dock-pop 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 /* Hide scrollbars cleanly */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

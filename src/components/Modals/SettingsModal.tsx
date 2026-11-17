@@ -17,7 +17,8 @@ export const SettingsModal: React.FC = () => {
   const handleSave = () => {
     saveGame();
     soundManager.playCash();
-    useGameStore.getState().notify('গেম সেভ হয়েছে!', 'আপনার অগ্রগতি সংরক্ষিত হয়েছে।', 'success');
+    useGameStore.getState().notify('সেটিংস সেভ হয়েছে!', 'আপনার অগ্রগতি ও সেটিংস সংরক্ষিত হয়েছে।', 'success');
+    closeModal();
   };
 
   const handleReset = () => {
@@ -175,7 +176,7 @@ export const SettingsModal: React.FC = () => {
                 <span className="font-bold text-amber-300">Space</span>
               </div>
               <div className="p-2 rounded-xl bg-slate-900 border border-slate-800 flex justify-between">
-                <span className="text-slate-400">কথা / কাজ:</span>
+                <span className="text-slate-400">যাত্রা / ডেলিভারি:</span>
                 <span className="font-bold text-amber-300">E</span>
               </div>
               <div className="p-2 rounded-xl bg-slate-900 border border-slate-800 flex justify-between">
@@ -190,49 +191,51 @@ export const SettingsModal: React.FC = () => {
           </div>
 
           {/* Save, Main Menu & Reset */}
-          {gameMode !== 'menu' && (
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={handleSave}
-                className="flex-1 py-2.5 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow flex items-center justify-center gap-1.5"
-              >
-                <Save className="w-4 h-4" />
-                <span>সেভ করুন</span>
-              </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={handleSave}
+              className="flex-1 py-2.5 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Save className="w-4 h-4" />
+              <span>সেভ করুন</span>
+            </button>
 
-              <button
-                onClick={handleReturnMenu}
-                className="py-2.5 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-1.5"
-              >
-                <Home className="w-4 h-4" />
-                <span>মূল মেনু</span>
-              </button>
-
-              {!confirmReset ? (
+            {gameMode !== 'menu' && (
+              <>
                 <button
-                  onClick={() => setConfirmReset(true)}
-                  className="py-2.5 px-4 rounded-2xl bg-slate-800 hover:bg-rose-950 text-rose-300 border border-slate-700 hover:border-rose-500 text-xs font-bold"
+                  onClick={handleReturnMenu}
+                  className="py-2.5 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                 >
-                  রিসেট
+                  <Home className="w-4 h-4" />
+                  <span>মূল মেনু</span>
                 </button>
-              ) : (
-                <div className="flex gap-1.5">
+
+                {!confirmReset ? (
                   <button
-                    onClick={handleReset}
-                    className="py-2.5 px-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs"
+                    onClick={() => setConfirmReset(true)}
+                    className="py-2.5 px-4 rounded-2xl bg-slate-800 hover:bg-rose-950 text-rose-300 border border-slate-700 hover:border-rose-500 text-xs font-bold cursor-pointer"
                   >
-                    নিশ্চিত
+                    রিসেট
                   </button>
-                  <button
-                    onClick={() => setConfirmReset(false)}
-                    className="py-2.5 px-3 rounded-2xl bg-slate-800 text-slate-300 font-bold text-xs"
-                  >
-                    না
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+                ) : (
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={handleReset}
+                      className="py-2.5 px-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs cursor-pointer"
+                    >
+                      নিশ্চিত
+                    </button>
+                    <button
+                      onClick={() => setConfirmReset(false)}
+                      className="py-2.5 px-3 rounded-2xl bg-slate-800 text-slate-300 font-bold text-xs cursor-pointer"
+                    >
+                      না
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

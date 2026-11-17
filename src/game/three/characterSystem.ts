@@ -75,7 +75,7 @@ export interface CharacterBuildConfig {
   shoesStyle?: string;
   watchStyle?: string;
   necklaceStyle?: string;
-  propType?: 'none' | 'tea_glass' | 'handbag' | 'whistle_badge';
+  propType?: 'none' | 'tea_glass' | 'handbag' | 'whistle_badge' | 'lathi';
   hasDupatta?: boolean;
   hasEpaulettes?: boolean;
   showMarkerArrow?: boolean;
@@ -447,6 +447,46 @@ export function buildStylizedCharacter(cfg: CharacterBuildConfig): StylizedChara
       elbowPivot.add(bag);
     }
 
+    // Bamboo/Wooden Lathi (লাঠি) held in Hero's right hand for smashing shops & props
+    if (!isLeft && cfg.propType === 'lathi') {
+      const lathiGroup = new THREE.Group();
+      lathiGroup.position.set(0.01, -0.27, 0.05);
+      lathiGroup.rotation.x = Math.PI / 2 - 0.34;
+      lathiGroup.rotation.z = -0.08;
+
+      const woodStickMat = makeStdMat({ color: 0xb45309, roughness: 0.62 }, mats);
+      const nodeRingMat = makeStdMat({ color: 0x78350f, roughness: 0.72 }, mats);
+      const gripMat = makeStdMat({ color: 0x18181b, roughness: 0.85 }, mats);
+
+      const shaft = new THREE.Mesh(cylGeo, woodStickMat);
+      shaft.scale.set(0.032, 1.18, 0.032);
+      shaft.position.y = 0.24;
+      shaft.castShadow = true;
+      lathiGroup.add(shaft);
+
+      // Black grip wrap around hand hold
+      const grip = new THREE.Mesh(cylGeo, gripMat);
+      grip.scale.set(0.038, 0.2, 0.038);
+      grip.position.y = -0.02;
+      lathiGroup.add(grip);
+
+      // Bamboo joint rings along the lathi
+      [-0.22, 0.16, 0.42, 0.66].forEach((ny) => {
+        const ring = new THREE.Mesh(cylGeo, nodeRingMat);
+        ring.scale.set(0.038, 0.022, 0.038);
+        ring.position.y = ny;
+        lathiGroup.add(ring);
+      });
+
+      // Brass/metal tip cap
+      const tipCap = new THREE.Mesh(cylGeo, goldMat);
+      tipCap.scale.set(0.034, 0.07, 0.034);
+      tipCap.position.y = 0.82;
+      lathiGroup.add(tipCap);
+
+      elbowPivot.add(lathiGroup);
+    }
+
     return { shoulderPivot, elbowPivot };
   };
 
@@ -791,6 +831,7 @@ export function createHeroCharacterFromEquipped(
     shoesStyle: shoes?.styleName || 'white_red',
     watchStyle: watch?.styleName || 'gold_black',
     necklaceStyle: necklace?.styleName || 'none',
+    propType: 'lathi',
     showMarkerArrow,
   });
 }
@@ -979,13 +1020,14 @@ export function animateCharacterRig(
   rig.headGroup.rotation.set(0, 0, 0);
 
   if (action === 'action_kick') {
-    rig.rightLegPivot.rotation.x = -1.2;
-    rig.rightKneePivot.rotation.x = 0.2;
-    rig.leftLegPivot.rotation.x = 0.25;
-    rig.rightArmPivot.rotation.x = -1.25;
-    rig.rightElbowPivot.rotation.x = -0.4;
+    rig.rightLegPivot.rotation.x = -1.15;
+    rig.rightKneePivot.rotation.x = 0.22;
+    rig.leftLegPivot.rotation.x = 0.22;
+    rig.rightArmPivot.rotation.x = -1.65;
+    rig.rightArmPivot.rotation.z = -0.22;
+    rig.rightElbowPivot.rotation.x = -0.55;
     rig.leftArmPivot.rotation.x = 0.55;
-    rig.torsoGroup.rotation.x = 0.22;
+    rig.torsoGroup.rotation.x = 0.25;
     return;
   }
 

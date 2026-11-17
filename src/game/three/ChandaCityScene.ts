@@ -50,7 +50,7 @@ import {
 } from './characterSystem';
 
 export interface SceneInteractionTarget {
-  type: 'shop' | 'vehicle' | 'destructible' | 'delivery' | 'npc';
+  type: 'shop' | 'vehicle' | 'destructible' | 'delivery';
   id: string;
   name: string;
   distance: number;
@@ -116,6 +116,8 @@ export class ChandaCityScene {
   private moveLeft = false;
   private moveRight = false;
   private isSprinting = false;
+  private touchMoveX = 0;
+  private touchMoveY = 0;
   private cameraAngleYaw = 0;
   private cameraAnglePitch = 0.36;
   private cameraDistance = 7.5;
@@ -144,6 +146,16 @@ export class ChandaCityScene {
   private debrisMaterials: Map<number, THREE.MeshStandardMaterial> = new Map();
   private deliveryBeacon: THREE.Group | null = null;
   private deliveryRing: THREE.Mesh | null = null;
+
+  // Reusable math & environment refs to avoid per-frame GC allocations
+  private envTarget: THREE.WebGLRenderTarget | null = null;
+  private onContextLostHandler: ((e: Event) => void) | null = null;
+  private camLookTarget = new THREE.Vector3();
+  private camTargetPos = new THREE.Vector3();
+  private readonly skyMorning = new THREE.Color(0xfef08a).lerp(new THREE.Color(0x38bdf8), 0.55);
+  private readonly skyAfternoon = new THREE.Color(0x38bdf8);
+  private readonly skyEvening = new THREE.Color(0xf59e0b).lerp(new THREE.Color(0x7c2d12), 0.32);
+  private readonly skyNight = new THREE.Color(0x0b1120);
 
   // Store listeners & event cleanup
   private unsubStore: (() => void) | null = null;
@@ -199,13 +211,16 @@ export class ChandaCityScene {
       56,
       Math.max(1, container.clientWidth) / Math.max(1, container.clientHeight),
       0.2,
-      460
+      600
     );
     this.camera.position.set(0, 5, 19);
 
     // 4. Studio Environment Lighting (PMREM)
     const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
-    this.scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+    const roomEnv = new RoomEnvironment();
+    this.envTarget = pmremGenerator.fromScene(roomEnv, 0.04);
+    this.scene.environment = this.envTarget.texture;
+    roomEnv.dispose();
     pmremGenerator.dispose();
 
     // 5. Lighting Rig
@@ -237,7 +252,7 @@ export class ChandaCityScene {
     this.setupTraffic();
     this.setupInputListeners();
 
-    // Subscribe to destructibles & activeDelivery changes
+    // Subscribe to destructibles changes
     let prevDestructibles = useGameStore.getState().destructibles;
     this.unsubStore = useGameStore.subscribe((state) => {
       if (state.destructibles !== prevDestructibles) {
@@ -246,10 +261,10 @@ export class ChandaCityScene {
       }
     });
 
-    const onContextLost = (e: Event) => {
+    this.onContextLostHandler = (e: Event) => {
       e.preventDefault();
     };
-    this.renderer.domElement.addEventListener('webglcontextlost', onContextLost, false);
+    this.renderer.domElement.addEventListener('webglcontextlost', this.onContextLostHandler, false);
     window.addEventListener('resize', this.handleResize);
 
     // Start render loop
@@ -276,42 +291,42 @@ export class ChandaCityScene {
   private buildCityWorld() {
     const store = useGameStore.getState();
 
-    // 1. Textured Urban Concrete Base Ground (expanded 460x460m)
+    // 1. Textured Urban Concrete Base Ground (expanded 640x640m)
     const groundTex = createUrbanGroundTexture();
     const groundMat = new THREE.MeshStandardMaterial({ map: groundTex, roughness: 0.92 });
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(460, 460), groundMat);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(640, 640), groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     this.scene.add(ground);
 
-    // 2. Paved Divided Metro Avenue Grid (Main NS, Main EW + Inner Ring ±50 + Outer Ring ±105)
-    const mainRoadMat = new THREE.MeshStandardMaterial({ map: createRoadTexture(26), roughness: 0.84 });
-    const ringRoadMat = new THREE.MeshStandardMaterial({ map: createRoadTexture(18), roughness: 0.84 });
+    // 2. Paved Divided Metro Avenue Grid (Main NS/EW + Rings ±50, ±105, ±165)
+    const mainRoadMat = new THREE.MeshStandardMaterial({ map: createRoadTexture(34), roughness: 0.84 });
+    const ringRoadMat = new THREE.MeshStandardMaterial({ map: createRoadTexture(24), roughness: 0.84 });
 
-    // Main Divided NS Boulevard (x in [-9.5, 9.5], z in [-165, 165])
-    const nsRoad = new THREE.Mesh(new THREE.PlaneGeometry(19, 330), mainRoadMat);
+    // Main Divided NS Boulevard (x in [-9.5, 9.5], z in [-230, 230])
+    const nsRoad = new THREE.Mesh(new THREE.PlaneGeometry(19, 460), mainRoadMat);
     nsRoad.rotation.x = -Math.PI / 2;
     nsRoad.position.set(0, 0.02, 0);
     nsRoad.receiveShadow = true;
     this.scene.add(nsRoad);
 
-    // Main EW Avenue (z in [-7, 7], x in [-165, 165])
-    const ewRoad = new THREE.Mesh(new THREE.PlaneGeometry(330, 14), mainRoadMat);
+    // Main EW Avenue (z in [-7, 7], x in [-230, 230])
+    const ewRoad = new THREE.Mesh(new THREE.PlaneGeometry(460, 14), mainRoadMat);
     ewRoad.rotation.x = -Math.PI / 2;
     ewRoad.rotation.z = Math.PI / 2;
     ewRoad.position.set(0, 0.025, 0);
     ewRoad.receiveShadow = true;
     this.scene.add(ewRoad);
 
-    // Inner Ring Roads (x = ±50, z = ±50) & Outer Ring Roads (x = ±105, z = ±105)
+    // Inner Ring Roads (x = ±50, z = ±50), Mid Ring (±105), Outer Express Ring (±165)
     [-50, 50].forEach((offset) => {
-      const rNS = new THREE.Mesh(new THREE.PlaneGeometry(10, 260), ringRoadMat);
+      const rNS = new THREE.Mesh(new THREE.PlaneGeometry(10, 360), ringRoadMat);
       rNS.rotation.x = -Math.PI / 2;
       rNS.position.set(offset, 0.015, 0);
       rNS.receiveShadow = true;
       this.scene.add(rNS);
 
-      const rEW = new THREE.Mesh(new THREE.PlaneGeometry(10, 260), ringRoadMat);
+      const rEW = new THREE.Mesh(new THREE.PlaneGeometry(10, 360), ringRoadMat);
       rEW.rotation.x = -Math.PI / 2;
       rEW.rotation.z = Math.PI / 2;
       rEW.position.set(0, 0.018, offset);
@@ -320,13 +335,13 @@ export class ChandaCityScene {
     });
 
     [-105, 105].forEach((offset) => {
-      const oNS = new THREE.Mesh(new THREE.PlaneGeometry(10, 300), ringRoadMat);
+      const oNS = new THREE.Mesh(new THREE.PlaneGeometry(10, 400), ringRoadMat);
       oNS.rotation.x = -Math.PI / 2;
       oNS.position.set(offset, 0.014, 0);
       oNS.receiveShadow = true;
       this.scene.add(oNS);
 
-      const oEW = new THREE.Mesh(new THREE.PlaneGeometry(10, 300), ringRoadMat);
+      const oEW = new THREE.Mesh(new THREE.PlaneGeometry(10, 400), ringRoadMat);
       oEW.rotation.x = -Math.PI / 2;
       oEW.rotation.z = Math.PI / 2;
       oEW.position.set(0, 0.017, offset);
@@ -334,34 +349,49 @@ export class ChandaCityScene {
       this.scene.add(oEW);
     });
 
+    [-165, 165].forEach((offset) => {
+      const xNS = new THREE.Mesh(new THREE.PlaneGeometry(10, 440), ringRoadMat);
+      xNS.rotation.x = -Math.PI / 2;
+      xNS.position.set(offset, 0.013, 0);
+      xNS.receiveShadow = true;
+      this.scene.add(xNS);
+
+      const xEW = new THREE.Mesh(new THREE.PlaneGeometry(10, 440), ringRoadMat);
+      xEW.rotation.x = -Math.PI / 2;
+      xEW.rotation.z = Math.PI / 2;
+      xEW.position.set(0, 0.016, offset);
+      xEW.receiveShadow = true;
+      this.scene.add(xEW);
+    });
+
     // 3. Raised Brick Herringbone Footpaths + Yellow-Black Dhaka Curbs & Drain Grates
     const sidewalkMat = new THREE.MeshStandardMaterial({ map: createSidewalkTexture(), roughness: 0.88 });
-    const curbMat = new THREE.MeshStandardMaterial({ map: createCurbTexture(36), roughness: 0.82 });
+    const curbMat = new THREE.MeshStandardMaterial({ map: createCurbTexture(48), roughness: 0.82 });
     const drainMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.6, roughness: 0.4 });
 
     [-11.25, 11.25].forEach((sx) => {
-      const walkN = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.18, 148), sidewalkMat);
-      walkN.position.set(sx, 0.09, -84);
+      const walkN = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.18, 212), sidewalkMat);
+      walkN.position.set(sx, 0.09, -116);
       walkN.receiveShadow = true;
       this.scene.add(walkN);
 
-      const walkS = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.18, 148), sidewalkMat);
-      walkS.position.set(sx, 0.09, 84);
+      const walkS = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.18, 212), sidewalkMat);
+      walkS.position.set(sx, 0.09, 116);
       walkS.receiveShadow = true;
       this.scene.add(walkS);
 
       // Bold Yellow-Black Curb along road edge
       const curbX = sx > 0 ? 9.6 : -9.6;
-      const curbN = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 148), curbMat);
-      curbN.position.set(curbX, 0.11, -84);
+      const curbN = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 212), curbMat);
+      curbN.position.set(curbX, 0.11, -116);
       this.scene.add(curbN);
 
-      const curbS = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 148), curbMat);
-      curbS.position.set(curbX, 0.11, 84);
+      const curbS = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 212), curbMat);
+      curbS.position.set(curbX, 0.11, 116);
       this.scene.add(curbS);
 
       // Storm drain grates embedded on the brick footpath
-      [-130, -88, -44, -20, 20, 44, 88, 130].forEach((dz) => {
+      [-190, -148, -130, -88, -44, -20, 20, 44, 88, 130, 148, 190].forEach((dz) => {
         const grate = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.03, 1.35), drainMat);
         grate.position.set(sx > 0 ? 10.2 : -10.2, 0.19, dz);
         this.scene.add(grate);
@@ -369,13 +399,13 @@ export class ChandaCityScene {
     });
 
     [-8.75, 8.75].forEach((sz) => {
-      const walkW = new THREE.Mesh(new THREE.BoxGeometry(146, 0.16, 3.5), sidewalkMat);
-      walkW.position.set(-86, 0.08, sz);
+      const walkW = new THREE.Mesh(new THREE.BoxGeometry(206, 0.16, 3.5), sidewalkMat);
+      walkW.position.set(-116, 0.08, sz);
       walkW.receiveShadow = true;
       this.scene.add(walkW);
 
-      const walkE = new THREE.Mesh(new THREE.BoxGeometry(146, 0.16, 3.5), sidewalkMat);
-      walkE.position.set(86, 0.08, sz);
+      const walkE = new THREE.Mesh(new THREE.BoxGeometry(206, 0.16, 3.5), sidewalkMat);
+      walkE.position.set(116, 0.08, sz);
       walkE.receiveShadow = true;
       this.scene.add(walkE);
     });
@@ -383,7 +413,7 @@ export class ChandaCityScene {
     // Dhaka Compound Walls behind outer sidewalk gaps
     const wallMat = new THREE.MeshStandardMaterial({ map: createCompoundWallTexture(), roughness: 0.8 });
     [-13.2, 13.2].forEach((wx) => {
-      [-104, -74, 84, 104].forEach((wz) => {
+      [-168, -104, -74, 84, 104, 168].forEach((wz) => {
         const cWall = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.4, 12), wallMat);
         cWall.position.set(wx, 1.2, wz);
         this.scene.add(cWall);
@@ -494,8 +524,23 @@ export class ChandaCityScene {
       [-80, -82, 14, 14, 5, '#1e293b', '#93c5fd'],
       [80, 126, 16, 14, 5, '#0f172a', '#eab308'],
       [-76, 126, 16, 14, 4, '#334155', '#fcd34d'],
-      [0, -162, 22, 10, 5, '#1e293b', '#f59e0b'],
-      [0, 162, 22, 10, 5, '#0f172a', '#38bdf8'],
+      // Outer Ring Skyline Blocks (±165..±225 districts)
+      [-34, -188, 16, 14, 5, '#1e293b', '#f59e0b'],
+      [34, -188, 16, 14, 5, '#0f766e', '#5eead4'],
+      [-34, 188, 16, 14, 5, '#312e81', '#a5b4fc'],
+      [34, 188, 16, 14, 5, '#7c2d12', '#fdba74'],
+      [-192, -36, 16, 18, 5, '#334155', '#38bdf8'],
+      [-192, 36, 16, 18, 4, '#4c1d95', '#ddd6fe'],
+      [192, -36, 16, 18, 5, '#065f46', '#a7f3d0'],
+      [192, 36, 16, 18, 5, '#881337', '#fda4af'],
+      [-192, -138, 14, 16, 5, '#1e3a8a', '#fef08a'],
+      [192, -138, 14, 16, 5, '#701a75', '#f0abfc'],
+      [-192, 138, 14, 16, 4, '#365314', '#bef264'],
+      [192, 138, 14, 16, 5, '#0f172a', '#fb923c'],
+      [-80, -196, 18, 14, 5, '#334155', '#cbd5e1'],
+      [80, -196, 18, 14, 5, '#1e293b', '#f59e0b'],
+      [-80, 196, 18, 14, 4, '#0369a1', '#e0f2fe'],
+      [80, 196, 18, 14, 5, '#be123c', '#ffe4e6'],
     ];
     urbanBlocks.forEach(([bx, bz, bw, bd, floors, wall, trim]) => {
       const b = createUrbanBuilding(bx, bz, bw, bd, floors, wall, trim);
@@ -702,14 +747,14 @@ export class ChandaCityScene {
     ];
 
     // Walkers along widened brick NS sidewalks (x = ±10.8) — include female citizens
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 16; i++) {
       const isFemale = i % 3 === 1;
       const [shirt, bottom] = outfitCombos[i % outfitCombos.length];
       const rig = isFemale
         ? createNPCCharacter('female_citizen', { variantSeed: i })
         : createArticulatedCharacter({ shirtColor: shirt, bottomColor: bottom });
       const fixedX = i % 2 === 0 ? -10.8 : 10.8;
-      const startZ = -132 + i * 24;
+      const startZ = -192 + i * 24;
       rig.root.position.set(fixedX, 0.18, startZ);
       this.scene.add(rig.root);
       this.pedestrians.push({
@@ -717,8 +762,8 @@ export class ChandaCityScene {
         isFemale,
         axis: 'z',
         fixedCoord: fixedX,
-        minRange: -145,
-        maxRange: 145,
+        minRange: -205,
+        maxRange: 205,
         direction: i % 2 === 0 ? 1 : -1,
         speed: 1.55 + (i % 3) * 0.3,
         phase: i * 1.1,
@@ -727,14 +772,14 @@ export class ChandaCityScene {
     }
 
     // Walkers along EW sidewalks (z = ±8.5)
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 10; i++) {
       const isFemale = i % 2 === 0;
       const [shirt, bottom] = outfitCombos[(i + 2) % outfitCombos.length];
       const rig = isFemale
         ? createNPCCharacter('female_citizen', { variantSeed: i + 5 })
         : createArticulatedCharacter({ shirtColor: shirt, bottomColor: bottom });
       const fixedZ = i % 2 === 0 ? -8.5 : 8.5;
-      const startX = -110 + i * 31;
+      const startX = -175 + i * 36;
       rig.root.position.set(startX, 0.16, fixedZ);
       this.scene.add(rig.root);
       this.pedestrians.push({
@@ -742,8 +787,8 @@ export class ChandaCityScene {
         isFemale,
         axis: 'x',
         fixedCoord: fixedZ,
-        minRange: -135,
-        maxRange: 135,
+        minRange: -195,
+        maxRange: 195,
         direction: i % 2 === 0 ? 1 : -1,
         speed: 1.45 + (i % 3) * 0.25,
         phase: i * 0.9,
@@ -753,7 +798,7 @@ export class ChandaCityScene {
   }
 
   private setupTraffic() {
-    // Lane traffic along divided Metro Avenue (x = ±5.6) & EW (z = ±4.6) + Inner & Outer Ring Roads
+    // Lane traffic along divided Metro Avenue (x = ±5.6) & EW (z = ±4.6) + Ring Roads (±50, ±105, ±165)
     const addTraffic = (
       mesh: THREE.Group,
       axis: 'x' | 'z',
@@ -776,16 +821,20 @@ export class ChandaCityScene {
     };
 
     // Southbound left carriageway & Northbound right carriageway
-    addTraffic(createRickshawModel(), 'z', -7.2, 24, 1, 4.4, 20, 145);
-    addTraffic(createCarModel(0xf8fafc), 'z', -4.0, -30, 1, 8.2, -145, -14);
-    addTraffic(createCarModel(0xe2e8f0), 'z', 4.2, -55, -1, 8.5, -145, -14);
-    addTraffic(createCNGModel(), 'z', 6.8, 65, -1, 7.2, 16, 145);
-    addTraffic(createMurirTinBusModel(), 'z', -50 + 2.5, -45, 1, 6.0, -120, 120);
-    addTraffic(createCarModel(0xf8fafc), 'z', 50 - 2.5, 45, -1, 7.8, -120, 120);
-    addTraffic(createRickshawModel(), 'x', 5.0, 55, -1, 4.2, 16, 138);
-    addTraffic(createDeliveryVanModel(), 'x', -5.0, -55, 1, 6.5, -138, -16);
-    addTraffic(createCNGModel(), 'z', 105 - 2.4, -70, 1, 7.0, -135, 135);
-    addTraffic(createCarModel(0xfef08a), 'x', -105 + 2.4, 30, -1, 7.5, -135, 135);
+    addTraffic(createRickshawModel(), 'z', -7.2, 24, 1, 4.4, 20, 205);
+    addTraffic(createCarModel(0xf8fafc), 'z', -4.0, -30, 1, 8.2, -205, -14);
+    addTraffic(createCarModel(0xe2e8f0), 'z', 4.2, -55, -1, 8.5, -205, -14);
+    addTraffic(createCNGModel(), 'z', 6.8, 65, -1, 7.2, 16, 205);
+    addTraffic(createMurirTinBusModel(), 'z', -50 + 2.5, -45, 1, 6.0, -170, 170);
+    addTraffic(createCarModel(0xf8fafc), 'z', 50 - 2.5, 45, -1, 7.8, -170, 170);
+    addTraffic(createRickshawModel(), 'x', 5.0, 55, -1, 4.2, 16, 198);
+    addTraffic(createDeliveryVanModel(), 'x', -5.0, -55, 1, 6.5, -198, -16);
+    addTraffic(createCNGModel(), 'z', 105 - 2.4, -70, 1, 7.0, -185, 185);
+    addTraffic(createCarModel(0xfef08a), 'x', -105 + 2.4, 30, -1, 7.5, -185, 185);
+    addTraffic(createMurirTinBusModel(), 'z', 165 - 2.4, -90, 1, 6.4, -205, 205);
+    addTraffic(createCarModel(0x38bdf8), 'z', -165 + 2.4, 90, -1, 8.0, -205, 205);
+    addTraffic(createDeliveryVanModel(), 'x', -165 + 2.4, -60, 1, 6.8, -205, 205);
+    addTraffic(createCNGModel(), 'x', 165 - 2.4, 60, -1, 7.2, -205, 205);
   }
 
   private setupInputListeners() {
@@ -972,6 +1021,8 @@ export class ChandaCityScene {
   }
 
   public setTouchMovement(dx: number, dy: number, sprint = false) {
+    this.touchMoveX = dx;
+    this.touchMoveY = dy;
     this.moveForward = dy < -0.2;
     this.moveBackward = dy > 0.2;
     this.moveLeft = dx < -0.2;
@@ -1094,28 +1145,10 @@ export class ChandaCityScene {
       return;
     }
 
-    if (this.currentNearbyTarget.type === 'npc') {
-      const npcAgent = this.worldNpcs.find((n) => n.data.id === this.currentNearbyTarget?.id);
-      if (npcAgent) {
-        // Face player gently
-        if (this.playerRig) {
-          const dx = this.playerRig.root.position.x - npcAgent.rig.root.position.x;
-          const dz = this.playerRig.root.position.z - npcAgent.rig.root.position.z;
-          npcAgent.rig.root.rotation.y = Math.atan2(dx, dz);
-        }
-        store.setSelectedNPC(npcAgent.data);
-        store.openModal('npc_dialogue');
-        return;
-      }
-    }
-
     if (this.currentNearbyTarget.type === 'shop') {
-      const shop = store.shops.find((s) => s.id === this.currentNearbyTarget?.id);
-      if (shop) {
-        store.markShopVisited(shop.id);
-        store.setSelectedShop(shop);
-        store.openModal('negotiation');
-      }
+      // Shop proximity triggers Lathi Smash/Vangchur directly (talk modal removed per user request)
+      this.triggerAttackOrSmash();
+      return;
     } else if (this.currentNearbyTarget.type === 'vehicle') {
       const veh = store.vehicles.find((v) => v.id === this.currentNearbyTarget?.id);
       if (veh) {
@@ -1202,6 +1235,7 @@ export class ChandaCityScene {
       }
 
       if (frontShop) {
+        store.markShopVisited(frontShop.id);
         const hSpeed = Math.hypot(this.playerVelocity.x, this.playerVelocity.z);
         const isStandingStill =
           hSpeed < 1.1 &&
@@ -1228,7 +1262,7 @@ export class ChandaCityScene {
         this.shopStandTimer = 0;
         soundManager.stopShopChandaAudio();
       }
-    } else if (store.gameMode !== 'playing' || (store.activeModal !== null && store.activeModal !== 'negotiation')) {
+    } else {
       this.standingShopId = null;
       this.shopStandTimer = 0;
       soundManager.stopShopChandaAudio();
@@ -1266,19 +1300,11 @@ export class ChandaCityScene {
         }
       });
 
-      // 4. Check 3D World NPCs (closer threshold takes priority nicely when standing next to NPC)
-      this.worldNpcs.forEach((npc) => {
-        const d = Math.hypot(npc.rig.root.position.x - pPos.x, npc.rig.root.position.z - pPos.z);
-        if (d < 4.4 && (!closest || d < closest.distance - 0.6)) {
-          closest = { type: 'npc', id: npc.data.id, name: `${npc.data.nameBn} (${npc.data.roleBn.split('•')[0].trim()})`, distance: d };
-        }
-      });
-
-      // 5. Check intact destructibles (prefer shop/npc interaction if close, else prop)
+      // 4. Check intact destructibles (prefer shop interaction if close, else prop)
       store.destructibles.forEach((prop) => {
         if (prop.isDestroyed) return;
         const d = Math.hypot(prop.position[0] - pPos.x, prop.position[2] - pPos.z);
-        if (d < 3.4 && (!closest || (closest.type !== 'shop' && closest.type !== 'npc' && d < closest.distance))) {
+        if (d < 3.4 && (!closest || (closest.type !== 'shop' && d < closest.distance))) {
           closest = { type: 'destructible', id: prop.id, name: prop.nameBn, distance: d };
         }
       });
@@ -1324,9 +1350,7 @@ export class ChandaCityScene {
 
     if (store.gameMode !== 'playing' || store.activeModal !== null) {
       const modalAction: CharacterAnimAction | undefined =
-        store.activeModal === 'npc_dialogue' || store.activeModal === 'negotiation'
-          ? 'talk'
-          : undefined;
+        store.activeModal === 'police_encounter' ? 'reaction_shocked' : undefined;
       this.animateRig(this.playerRig, 0, false, 0, t, modalAction);
       return;
     }
@@ -1335,14 +1359,24 @@ export class ChandaCityScene {
       this.kickAnimTimer = Math.max(0, this.kickAnimTimer - delta);
     }
 
+    // Mobile virtual joystick auto-rotates the camera smoothly in the steering direction
+    if (Math.abs(this.touchMoveX) > 0.14 && Math.abs(this.touchMoveY) < 0.92) {
+      this.cameraAngleYaw -= this.touchMoveX * 2.1 * delta;
+    }
+
     const forward = new THREE.Vector3(-Math.sin(this.cameraAngleYaw), 0, -Math.cos(this.cameraAngleYaw));
     const right = new THREE.Vector3(Math.cos(this.cameraAngleYaw), 0, -Math.sin(this.cameraAngleYaw));
 
     const moveDir = new THREE.Vector3();
-    if (this.moveForward) moveDir.add(forward);
-    if (this.moveBackward) moveDir.sub(forward);
-    if (this.moveRight) moveDir.add(right);
-    if (this.moveLeft) moveDir.sub(right);
+    if (Math.abs(this.touchMoveX) > 0.14 || Math.abs(this.touchMoveY) > 0.14) {
+      moveDir.addScaledVector(forward, -this.touchMoveY);
+      moveDir.addScaledVector(right, this.touchMoveX);
+    } else {
+      if (this.moveForward) moveDir.add(forward);
+      if (this.moveBackward) moveDir.sub(forward);
+      if (this.moveRight) moveDir.add(right);
+      if (this.moveLeft) moveDir.sub(right);
+    }
 
     const isMoving = moveDir.lengthSq() > 0.01;
     if (isMoving) {
@@ -1383,10 +1417,10 @@ export class ChandaCityScene {
       }
     }
 
-    // Resolve AABB building collisions + expanded city clamp [-152, 152]
+    // Resolve AABB building collisions + expanded city clamp [-218, 218]
     const [resolvedX, resolvedZ] = this.resolveCollisions(nextX, nextZ, 0.48);
-    this.playerRig.root.position.x = Math.max(-152, Math.min(152, resolvedX));
-    this.playerRig.root.position.z = Math.max(-152, Math.min(152, resolvedZ));
+    this.playerRig.root.position.x = Math.max(-218, Math.min(218, resolvedX));
+    this.playerRig.root.position.z = Math.max(-218, Math.min(218, resolvedZ));
     this.playerRig.root.position.y = nextY;
 
     if (this.playerRig.root.position.y <= 0) {
@@ -1418,7 +1452,7 @@ export class ChandaCityScene {
   private updateCamera(delta: number) {
     if (!this.playerRig) return;
 
-    const lookTarget = new THREE.Vector3(
+    this.camLookTarget.set(
       this.playerRig.root.position.x,
       this.playerRig.root.position.y + 1.45,
       this.playerRig.root.position.z
@@ -1431,9 +1465,9 @@ export class ChandaCityScene {
     // Camera wall collision pullback
     let safeDist = this.cameraDistance;
     for (let d = 1.5; d <= this.cameraDistance; d += 0.6) {
-      const sampleX = lookTarget.x + dirX * d;
-      const sampleY = lookTarget.y + dirY * d;
-      const sampleZ = lookTarget.z + dirZ * d;
+      const sampleX = this.camLookTarget.x + dirX * d;
+      const sampleY = this.camLookTarget.y + dirY * d;
+      const sampleZ = this.camLookTarget.z + dirZ * d;
       if (sampleY < 4.5) {
         const hit = this.colliders.some(
           (c) => sampleX > c.minX && sampleX < c.maxX && sampleZ > c.minZ && sampleZ < c.maxZ
@@ -1447,14 +1481,14 @@ export class ChandaCityScene {
 
     this.currentCamDistance = THREE.MathUtils.damp(this.currentCamDistance, safeDist, 10, delta);
 
-    const targetPos = new THREE.Vector3(
-      lookTarget.x + dirX * this.currentCamDistance,
-      Math.max(0.8, lookTarget.y + dirY * this.currentCamDistance),
-      lookTarget.z + dirZ * this.currentCamDistance
+    this.camTargetPos.set(
+      this.camLookTarget.x + dirX * this.currentCamDistance,
+      Math.max(0.8, this.camLookTarget.y + dirY * this.currentCamDistance),
+      this.camLookTarget.z + dirZ * this.currentCamDistance
     );
 
-    this.camera.position.lerp(targetPos, Math.min(1, delta * 9));
-    this.camera.lookAt(lookTarget);
+    this.camera.position.lerp(this.camTargetPos, Math.min(1, delta * 9));
+    this.camera.lookAt(this.camLookTarget);
   }
 
   private updateLightingAndWeather(delta: number) {
@@ -1463,31 +1497,31 @@ export class ChandaCityScene {
       store.advanceGameTime(delta * 3.5);
     }
 
+    const bgColor = this.scene.background as THREE.Color;
     if (store.timeOfDay === 'morning') {
-      this.scene.background = new THREE.Color(0xfef08a).lerp(new THREE.Color(0x38bdf8), 0.55);
+      bgColor.copy(this.skyMorning);
       this.sunLight.color.setHex(0xffedd5);
       this.sunLight.intensity = 1.65;
       this.hemiLight.intensity = 0.95;
     } else if (store.timeOfDay === 'afternoon') {
-      this.scene.background = new THREE.Color(0x38bdf8);
+      bgColor.copy(this.skyAfternoon);
       this.sunLight.color.setHex(0xffffff);
       this.sunLight.intensity = 2.0;
       this.hemiLight.intensity = 1.05;
     } else if (store.timeOfDay === 'evening') {
-      // Golden Dhaka sunset atmosphere matching visual target!
-      this.scene.background = new THREE.Color(0xf59e0b).lerp(new THREE.Color(0x7c2d12), 0.32);
+      bgColor.copy(this.skyEvening);
       this.sunLight.color.setHex(0xfb923c);
       this.sunLight.intensity = 1.45;
       this.hemiLight.intensity = 0.8;
     } else {
-      this.scene.background = new THREE.Color(0x0b1120);
+      bgColor.copy(this.skyNight);
       this.sunLight.color.setHex(0x60a5fa);
       this.sunLight.intensity = 0.55;
       this.hemiLight.intensity = 0.45;
     }
 
     if (this.scene.fog) {
-      (this.scene.fog as THREE.FogExp2).color.copy(this.scene.background as THREE.Color);
+      (this.scene.fog as THREE.FogExp2).color.copy(bgColor);
     }
 
     if (this.rainParticles) {
@@ -1524,7 +1558,6 @@ export class ChandaCityScene {
 
   private updateWorldNPCs(delta: number) {
     if (!this.playerRig) return;
-    const store = useGameStore.getState();
     const t = this.clock.getElapsedTime();
     const camPos = this.camera.position;
 
@@ -1535,14 +1568,6 @@ export class ChandaCityScene {
 
       // LOD optimization: skip off-screen distant limb updates
       if (distToCam > 85) continue;
-
-      const isCurrentlyTalking =
-        store.activeModal === 'npc_dialogue' && store.selectedNPC?.id === npc.data.id;
-
-      if (isCurrentlyTalking) {
-        animateCharacterRig(npc.rig, { action: 'talk', phase: t + npc.phase });
-        continue;
-      }
 
       if (npc.data.patrolRadius > 0 && npc.data.patrolSpeed > 0) {
         if (npc.socialPauseTimer > 0) {
@@ -1681,8 +1706,8 @@ export class ChandaCityScene {
         const chaser = this.policeAgents[nearestIdx];
         if (chaser && (minDist > 24 || minDist < 6)) {
           const backAngle = this.playerRig.root.rotation.y + Math.PI;
-          const rawX = Math.max(-148, Math.min(148, playerPos.x + Math.sin(backAngle) * 16));
-          const rawZ = Math.max(-148, Math.min(148, playerPos.z + Math.cos(backAngle) * 16));
+          const rawX = Math.max(-212, Math.min(212, playerPos.x + Math.sin(backAngle) * 16));
+          const rawZ = Math.max(-212, Math.min(212, playerPos.z + Math.cos(backAngle) * 16));
           const [sx, sz] = this.resolveCollisions(rawX, rawZ, 0.55);
           chaser.rig.root.position.set(sx, 0, sz);
         }
@@ -1726,7 +1751,10 @@ export class ChandaCityScene {
       const copPos = cop.rig.root.position;
       const dist = Math.hypot(copPos.x - playerPos.x, copPos.z - playerPos.z);
 
-      if (policeStatus === 'caught' && idx === this.catchingCopIdx) {
+      if (
+        (policeStatus === 'caught' && idx === this.catchingCopIdx) ||
+        (store.activeModal === 'police_encounter' && idx === 0)
+      ) {
         const dx = playerPos.x - copPos.x;
         const dz = playerPos.z - copPos.z;
         cop.rig.root.rotation.y = Math.atan2(dx, dz);
@@ -1898,6 +1926,10 @@ export class ChandaCityScene {
     if (this.cleanupListeners) {
       this.cleanupListeners();
     }
+    if (this.onContextLostHandler) {
+      this.renderer.domElement.removeEventListener('webglcontextlost', this.onContextLostHandler);
+      this.onContextLostHandler = null;
+    }
     window.removeEventListener('resize', this.handleResize);
 
     disposeCharacterRig(this.playerRig);
@@ -1907,6 +1939,8 @@ export class ChandaCityScene {
     this.shopKeepers.forEach((s) => disposeCharacterRig(s.rig));
     disposeCharacterTextures();
 
+    this.envTarget?.dispose();
+    this.envTarget = null;
     this.debrisGeo.dispose();
     this.debrisMaterials.forEach((m) => m.dispose());
     this.debrisMaterials.clear();

@@ -16,10 +16,15 @@ import {
   XCircle,
   Swords,
   Volume2,
+  Menu,
+  X,
 } from 'lucide-react';
+import { soundManager } from '../../audio/soundManager';
 
 interface GameHUDProps {
   nearbyTarget: SceneInteractionTarget | null;
+  isMenuOpen: boolean;
+  onToggleMenu: () => void;
   onOpenFullMap: () => void;
   onOpenEconomy: () => void;
   onInteract: () => void;
@@ -28,6 +33,8 @@ interface GameHUDProps {
 
 export const GameHUD: React.FC<GameHUDProps> = ({
   nearbyTarget,
+  isMenuOpen,
+  onToggleMenu,
   onOpenFullMap,
   onOpenEconomy,
   onInteract,
@@ -48,6 +55,12 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   const activeBrawl = useGameStore((state) => state.activeBrawl);
   const comicHitPopup = useGameStore((state) => state.comicHitPopup);
   const chandaCallout = useGameStore((state) => state.chandaCallout);
+  const missions = useGameStore((state) => state.missions);
+  const achievements = useGameStore((state) => state.achievements);
+
+  const claimableCount =
+    missions.filter((m) => m.completed && !m.claimed).length +
+    achievements.filter((a) => a.unlocked && !a.claimed).length;
 
   const [isShaking, setIsShaking] = useState(false);
 
@@ -165,10 +178,47 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                 </button>
               </div>
             )}
+
+            {/* Mobile Notification: positioned cleanly just below Location */}
+            {notification && (
+              <div
+                className={`mt-0.5 animate-toast-drop pointer-events-none w-fit max-w-full px-2 py-1 rounded-xl bg-[#0B101E]/95 shadow-xl text-left flex flex-col items-start gap-0.5 border ${
+                  notification.type === 'danger'
+                    ? 'border-red-500/90 bg-gradient-to-r from-red-950/95 to-[#0B101E]/95'
+                    : notification.type === 'warning'
+                    ? 'border-amber-500/90'
+                    : notification.type === 'success'
+                    ? 'border-emerald-500/90'
+                    : 'border-amber-400/75'
+                }`}
+              >
+                <div
+                  className={`font-bold text-[10px] leading-tight flex items-center gap-1 max-w-full ${
+                    notification.type === 'danger'
+                      ? 'text-rose-300'
+                      : notification.type === 'success'
+                      ? 'text-emerald-300'
+                      : 'text-amber-300'
+                  }`}
+                >
+                  {notification.type === 'danger' ? (
+                    <ShieldAlert className="w-3 h-3 text-red-400 flex-shrink-0" />
+                  ) : (
+                    <Sparkles className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                  )}
+                  <span className="line-clamp-1">{notification.title}</span>
+                </div>
+                {notification.subtitle && (
+                  <div className="text-[9px] leading-tight text-slate-200 font-medium line-clamp-2">
+                    {notification.subtitle}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Top-Center (Desktop): District, Atmosphere, Event & Active Delivery */}
+        {/* Top-Center (Desktop): District, Atmosphere, Event, Delivery & Notification Below Location */}
         <div className="hidden md:flex flex-col items-center gap-1.5">
           <div className="pointer-events-auto px-3.5 py-1.5 rounded-xl bg-[#0B101E]/92 border border-slate-700/90 shadow-lg flex items-center gap-2.5 text-xs font-semibold text-slate-200">
             <div className="flex items-center gap-1.5 text-amber-300 font-bold">
@@ -205,10 +255,73 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               </button>
             </div>
           )}
+
+          {/* Desktop Notification: positioned cleanly just below Location */}
+          {notification && (
+            <div
+              className={`mt-1 animate-toast-drop pointer-events-none w-fit max-w-md px-3.5 py-1.5 rounded-xl bg-[#0B101E]/95 shadow-2xl text-center flex flex-col items-center gap-0.5 border ${
+                notification.type === 'danger'
+                  ? 'border-red-500/90 bg-gradient-to-r from-red-950/95 via-[#0B101E]/95 to-blue-950/95'
+                  : notification.type === 'warning'
+                  ? 'border-amber-500/90'
+                  : notification.type === 'success'
+                  ? 'border-emerald-500/90'
+                  : 'border-amber-400/75'
+              }`}
+            >
+              <div
+                className={`font-bold text-xs leading-tight flex items-center gap-1.5 ${
+                  notification.type === 'danger'
+                    ? 'text-rose-300'
+                    : notification.type === 'success'
+                    ? 'text-emerald-300'
+                    : 'text-amber-300'
+                }`}
+              >
+                {notification.type === 'danger' ? (
+                  <ShieldAlert className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                )}
+                <span className="truncate max-w-[360px]">{notification.title}</span>
+              </div>
+              {notification.subtitle && (
+                <div className="text-[11px] leading-tight text-slate-200 font-medium truncate max-w-[400px]">
+                  {notification.subtitle}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Top-Right: Wallet, Wanted Stars & MiniMap */}
+        {/* Top-Right: Menu Icon (Above Income), Wallet, Wanted Stars & MiniMap */}
         <div className="flex flex-col items-end gap-1.5 sm:gap-2 flex-shrink-0">
+          <button
+            onClick={() => {
+              soundManager.playDialogueBlip(1.1);
+              onToggleMenu();
+            }}
+            aria-label="মেনু খুলুন"
+            title="মেনু খুলুন"
+            className={`pointer-events-auto relative h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl border shadow-lg flex items-center gap-1.5 transition-colors active:scale-95 cursor-pointer ${
+              isMenuOpen
+                ? 'bg-amber-500 text-slate-950 border-amber-300'
+                : 'bg-[#0B101E]/92 hover:bg-slate-900 border-amber-400/55 hover:border-amber-400 text-amber-200'
+            }`}
+          >
+            {isMenuOpen ? (
+              <X className="w-4 h-4" />
+            ) : (
+              <Menu className="w-4 h-4 text-amber-400" />
+            )}
+            <span className="text-[11px] sm:text-xs font-bold leading-none">মেনু</span>
+            {claimableCount > 0 && !isMenuOpen && (
+              <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white font-black text-[9px] leading-none tabular-nums">
+                {claimableCount}
+              </span>
+            )}
+          </button>
+
           <button
             onClick={onOpenEconomy}
             className="pointer-events-auto flex items-center gap-1.5 sm:gap-2.5 p-1.5 sm:p-2.5 rounded-2xl bg-[#0B101E]/92 border border-amber-500/45 hover:border-amber-400 shadow-2xl transition-colors text-right"
@@ -343,73 +456,41 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         </div>
       )}
 
-      {/* ================= TOAST / POLICE NOTICE BANNER ================= */}
-      {notification && !activeBrawl && (
-        <div
-          className={`self-center mb-auto mt-2 pointer-events-auto max-w-[88vw] sm:max-w-sm px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-[#0B101E]/95 shadow-2xl text-center flex flex-col items-center gap-0.5 z-20 border-2 ${
-            notification.type === 'danger'
-              ? 'border-red-500 bg-gradient-to-r from-red-950/95 via-[#0B101E]/95 to-blue-950/95'
-              : notification.type === 'warning'
-              ? 'border-amber-500'
-              : notification.type === 'success'
-              ? 'border-emerald-500'
-              : 'border-amber-400/80'
-          }`}
-        >
-          <div
-            className={`font-black text-xs sm:text-sm flex items-center gap-1.5 ${
-              notification.type === 'danger'
-                ? 'text-rose-300'
-                : notification.type === 'success'
-                ? 'text-emerald-300'
-                : 'text-amber-300'
-            }`}
-          >
-            {notification.type === 'danger' ? (
-              <ShieldAlert className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 flex-shrink-0" />
-            ) : (
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 flex-shrink-0" />
-            )}
-            <span>{notification.title}</span>
-          </div>
-          <div className="text-[11px] sm:text-xs text-slate-200 font-medium">{notification.subtitle}</div>
-        </div>
-      )}
-
       {/* ================= INTERACTION PROMPT ================= */}
       {nearbyTarget && (
-        <div className="self-center mb-40 sm:mb-16 [@media(max-height:480px)]:mb-14 pointer-events-auto flex flex-col items-center z-20 max-w-[92vw] [@media(max-height:480px)]:max-w-[52vw]">
+        <div className="self-center mb-36 sm:mb-8 [@media(max-height:480px)]:mb-10 pointer-events-auto flex flex-col items-center z-20 max-w-[92vw] [@media(max-height:480px)]:max-w-[52vw]">
           <div className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl bg-[#0B101E]/95 border-2 border-amber-400 shadow-2xl flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5">
-            <div className="hidden sm:flex w-8 h-8 rounded-xl bg-amber-400 text-slate-950 items-center justify-center font-black text-sm">
-              E
-            </div>
+            {nearbyTarget.type !== 'shop' && nearbyTarget.type !== 'destructible' && (
+              <div className="hidden sm:flex w-8 h-8 rounded-xl bg-amber-400 text-slate-950 items-center justify-center font-black text-sm">
+                E
+              </div>
+            )}
             <div className="flex flex-col text-center sm:text-left">
               <span className="font-bold text-white text-[11px] sm:text-sm leading-tight">
                 {nearbyTarget.type === 'delivery' && 'পার্সেল ডেলিভারি দিন'}
                 {nearbyTarget.type === 'shop' && 'দোকানের সামনে'}
-                {nearbyTarget.type === 'vehicle' && 'যানবাহন / ড্রাইভার'}
-                {nearbyTarget.type === 'npc' && 'কথা বলুন [E]'}
+                {nearbyTarget.type === 'vehicle' && 'যানবাহন / ভাড়া'}
                 {nearbyTarget.type === 'destructible' && 'ভাঙচুর / লাথি মারুন'}
               </span>
               <span className="text-[10px] sm:text-[11px] text-amber-300 font-medium truncate max-w-[190px] sm:max-w-[260px]">
                 {nearbyTarget.name}
               </span>
             </div>
-            {nearbyTarget.type !== 'destructible' && (
+            {nearbyTarget.type !== 'destructible' && nearbyTarget.type !== 'shop' && (
               <button
                 onClick={onInteract}
                 className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] sm:text-xs shadow transition-transform active:scale-95"
               >
-                {nearbyTarget.type === 'delivery' ? 'ডেলিভারি' : 'কথা বলুন'}
+                {nearbyTarget.type === 'delivery' ? 'ডেলিভারি' : 'যাত্রা / ভাড়া'}
               </button>
             )}
             {(nearbyTarget.type === 'destructible' || nearbyTarget.type === 'shop') && (
               <button
                 onClick={onSmash}
-                className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] sm:text-xs shadow transition-transform active:scale-95 flex items-center gap-1"
+                className="px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] sm:text-xs shadow transition-transform active:scale-95 flex items-center gap-1"
               >
                 <Swords className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span>{nearbyTarget.type === 'shop' ? 'ভাঙচুর' : 'লাথি'}</span>
+                <span>{nearbyTarget.type === 'shop' ? 'ভাঙচুর [F]' : 'লাথি'}</span>
               </button>
             )}
           </div>

@@ -183,7 +183,7 @@ export function createShopModel(shop: ShopData): {
   // Glowing Bengali Neon Signboard
   const signTex = createBengaliSignTexture(
     shop.nameBn,
-    `মালিক: ${shop.ownerName} • [E] কথা বলুন`,
+    `মালিক: ${shop.ownerName} • [F] ভাঙচুর`,
     colors.sign,
     '#ffffff',
     shop.hasTask ? '#34d399' : '#facc15'
@@ -496,7 +496,7 @@ export function createElectricPolesAndWires(): THREE.Group {
   const poleMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.65, roughness: 0.4 });
   const wireMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
 
-  const zNodes = [-140, -112, -84, -56, -28, 28, 56, 84, 112, 140];
+  const zNodes = [-196, -168, -140, -112, -84, -56, -28, 28, 56, 84, 112, 140, 168, 196];
   [-10.2, 10.2].forEach((xSide) => {
     zNodes.forEach((zPos, i) => {
       const pole = new THREE.Mesh(cylinderGeo, poleMat);
@@ -527,7 +527,7 @@ export function createElectricPolesAndWires(): THREE.Group {
   });
 
   // Overhead wires crossing the main street at key spots (Dhaka street aesthetic)
-  [-126, -78, -48, -22, 22, 48, 78, 126].forEach((zCross) => {
+  [-184, -126, -78, -48, -22, 22, 48, 78, 126, 184].forEach((zCross) => {
     const curve = new THREE.CatmullRomCurve3([
       new THREE.Vector3(-10.2, 6.7, zCross),
       new THREE.Vector3(0, 6.0, zCross),
@@ -991,6 +991,16 @@ export function createCityTrees(): THREE.Group {
     [-40, 0, -110],
     [40, 0, 110],
     [-40, 0, 110],
+    [11, 0, -196],
+    [-11, 0, -196],
+    [11, 0, 196],
+    [-11, 0, 196],
+    [142, 0, -24],
+    [-142, 0, 24],
+    [156, 0, -118],
+    [-156, 0, -118],
+    [156, 0, 118],
+    [-156, 0, 118],
   ];
 
   treeCoords.forEach(([x, y, z]) => {
@@ -1040,12 +1050,18 @@ export function createStreetLampposts(): THREE.Group {
     [8.5, 0, 144, Math.PI],
     [-8.5, 0, -144, 0],
     [8.5, 0, -144, Math.PI],
+    [-8.5, 0, 184, 0],
+    [8.5, 0, 184, Math.PI],
+    [-8.5, 0, -184, 0],
+    [8.5, 0, -184, Math.PI],
     [-36, 0, 8.5, -Math.PI / 2],
     [36, 0, -8.5, Math.PI / 2],
     [-76, 0, 8.5, -Math.PI / 2],
     [76, 0, -8.5, Math.PI / 2],
     [-116, 0, 8.5, -Math.PI / 2],
     [116, 0, -8.5, Math.PI / 2],
+    [-165, 0, 8.5, -Math.PI / 2],
+    [165, 0, -8.5, Math.PI / 2],
   ];
 
   lampPositions.forEach(([x, y, z, rotY]) => {
@@ -1078,12 +1094,12 @@ export function createFlyoverPillars(): THREE.Group {
   const concreteMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.85 });
 
   const deck = new THREE.Mesh(boxGeo, concreteMat);
-  deck.scale.set(14, 1.3, 300);
+  deck.scale.set(14, 1.3, 440);
   deck.position.set(-128, 9.0, 0);
   deck.castShadow = true;
   group.add(deck);
 
-  for (let z = -135; z <= 135; z += 30) {
+  for (let z = -205; z <= 205; z += 34) {
     const pillar = new THREE.Mesh(cylinderGeo, concreteMat);
     pillar.scale.set(2.0, 9.0, 2.0);
     pillar.position.set(-128, 4.5, z);
@@ -1100,12 +1116,12 @@ export function createDhakaMetroViaduct(): { group: THREE.Group; colliders: BoxC
 
   const concreteMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.82 });
   const darkGirderMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.85 });
-  const curbMat = new THREE.MeshStandardMaterial({ map: createCurbTexture(36), roughness: 0.8 });
+  const curbMat = new THREE.MeshStandardMaterial({ map: createCurbTexture(48), roughness: 0.8 });
   const bushMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.78 });
 
-  // Elevated Metro Rail Box Girder Viaduct running down center (x = 0, y = 9.8)
+  // Elevated Metro Rail Box Girder Viaduct running down center (x = 0, y = 9.8, z in [-230, 230])
   const viaduct = new THREE.Mesh(boxGeo, concreteMat);
-  viaduct.scale.set(5.6, 1.6, 330);
+  viaduct.scale.set(5.6, 1.6, 460);
   viaduct.position.set(0, 9.8, 0);
   viaduct.castShadow = true;
   group.add(viaduct);
@@ -1113,7 +1129,7 @@ export function createDhakaMetroViaduct(): { group: THREE.Group; colliders: BoxC
   // Side parapet barriers on Metro deck
   [-2.65, 2.65].forEach((px) => {
     const parapet = new THREE.Mesh(boxGeo, darkGirderMat);
-    parapet.scale.set(0.32, 0.9, 330);
+    parapet.scale.set(0.32, 0.9, 460);
     parapet.position.set(px, 11.0, 0);
     group.add(parapet);
   });
@@ -1128,7 +1144,7 @@ export function createDhakaMetroViaduct(): { group: THREE.Group; colliders: BoxC
     roughness: 0.4,
   });
 
-  [-110, -26, 38, 110].forEach((sz) => {
+  [-175, -110, -26, 38, 110, 175].forEach((sz) => {
     const stationBridge = new THREE.Mesh(boxGeo, darkGirderMat);
     stationBridge.scale.set(17.5, 1.9, 6.2);
     stationBridge.position.set(0, 7.8, sz);
@@ -1146,10 +1162,10 @@ export function createDhakaMetroViaduct(): { group: THREE.Group; colliders: BoxC
     });
   });
 
-  // Center Median Islands (North: z in [-157, -13], South: z in [13, 157]) with yellow-black curbs & bushes
+  // Center Median Islands (North: z in [-219, -13], South: z in [13, 219]) with yellow-black curbs & bushes
   const medianSegments: [number, number][] = [
-    [-85, 144],
-    [85, 144],
+    [-116, 206],
+    [116, 206],
   ];
   medianSegments.forEach(([mz, mLen]) => {
     const medianBase = new THREE.Mesh(boxGeo, curbMat);
@@ -1161,8 +1177,14 @@ export function createDhakaMetroViaduct(): { group: THREE.Group; colliders: BoxC
     // Small manicured bushes along the median
     const startZ = mz - mLen / 2 + 3;
     const endZ = mz + mLen / 2 - 3;
-    for (let bz = startZ; bz <= endZ; bz += 5.2) {
-      if (Math.abs(Math.abs(bz) - 50) < 5 || Math.abs(Math.abs(bz) - 105) < 5) continue;
+    for (let bz = startZ; bz <= endZ; bz += 5.4) {
+      if (
+        Math.abs(Math.abs(bz) - 50) < 5 ||
+        Math.abs(Math.abs(bz) - 105) < 5 ||
+        Math.abs(Math.abs(bz) - 165) < 5
+      ) {
+        continue;
+      }
       const bush = new THREE.Mesh(sphereGeo, bushMat);
       bush.scale.set(0.62, 0.52, 0.62);
       bush.position.set(0, 0.48, bz);
@@ -1171,7 +1193,9 @@ export function createDhakaMetroViaduct(): { group: THREE.Group; colliders: BoxC
   });
 
   // Metro Pillars along center median (skipping central roundabout & ring road crossings)
-  const pillarZCoords = [-142, -118, -94, -72, -56, -30, -16, 16, 38, 62, 84, 118, 142];
+  const pillarZCoords = [
+    -198, -176, -142, -118, -94, -72, -56, -30, -16, 16, 38, 62, 84, 118, 142, 176, 198,
+  ];
   const posterMats = [0, 1, 2].map(
     (v) =>
       new THREE.MeshStandardMaterial({

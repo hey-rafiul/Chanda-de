@@ -107,7 +107,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
   };
 
   return (
-    <div className="relative w-full h-[100dvh] bg-[#060913] text-slate-100 overflow-y-auto overflow-x-hidden no-scrollbar select-none">
+    <div className="relative w-full h-[100dvh] bg-[#060913] text-slate-100 overflow-y-auto overflow-x-hidden touch-pan-y no-scrollbar select-none">
       {/* Dhaka Golden-Hour & Rickshaw Dusk Backdrop */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#060913] via-[#130f26] to-[#1e1312]" />
@@ -140,44 +140,45 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
       </div>
 
       {/* Main Container */}
-      <div className="relative z-10 max-w-6xl mx-auto min-h-full flex flex-col justify-between px-4 sm:px-8 py-4 sm:py-6 gap-8">
-        {/* Clean Single-Row Navigation Header */}
-        <header className="flex items-center justify-between gap-4 border-b border-slate-800/80 pb-3.5">
+      <div className="relative z-10 max-w-6xl mx-auto min-h-full flex flex-col justify-between px-3.5 sm:px-8 py-3.5 sm:py-6 gap-6 sm:gap-8">
+        {/* Clean Mobile-Safe Single-Row Navigation Header */}
+        <header className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 border-b border-slate-800/80 pb-3">
           <a
             href="#top"
             onClick={(e) => e.preventDefault()}
-            className="flex items-baseline gap-2.5 shrink-0"
+            className="flex items-baseline gap-2 shrink-0"
           >
-            <span className="font-bangla font-black text-xl sm:text-2xl text-amber-400 tracking-tight whitespace-nowrap">
+            <span className="font-bangla font-black text-lg sm:text-2xl text-amber-400 tracking-tight whitespace-nowrap">
               চান্দা দে
             </span>
-            <span className="font-arcade text-base sm:text-lg text-slate-400 tracking-widest whitespace-nowrap">
+            <span className="hidden sm:inline font-arcade text-lg text-slate-400 tracking-widest whitespace-nowrap">
               CHANDA DE
             </span>
           </a>
 
-          <nav className="flex items-center gap-2 sm:gap-5">
+          <nav className="flex items-center gap-1 sm:gap-4 ml-auto">
             <button
               onClick={() => setShowHowToPlay(true)}
-              className="px-2.5 py-1.5 text-xs sm:text-sm font-semibold text-slate-300 hover:text-amber-300 transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+              className="px-2 sm:px-2.5 py-1.5 text-[11px] sm:text-sm font-semibold text-slate-300 hover:text-amber-300 transition-colors flex items-center gap-1 sm:gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
-              <HelpCircle className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>খেলার নিয়ম</span>
+              <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
+              <span>নিয়ম</span>
+              <span className="hidden sm:inline">ও উদ্দেশ্য</span>
             </button>
 
             <button
               onClick={() => setShowCredits(true)}
-              className="px-2.5 py-1.5 text-xs sm:text-sm font-semibold text-slate-300 hover:text-amber-300 transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+              className="px-2 sm:px-2.5 py-1.5 text-[11px] sm:text-sm font-semibold text-slate-300 hover:text-amber-300 transition-colors flex items-center gap-1 sm:gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
-              <Award className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="hidden xs:inline sm:inline">কৃতজ্ঞতা</span>
+              <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />
+              <span>কৃতজ্ঞতা</span>
             </button>
 
             <button
               onClick={onOpenSettings}
-              className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-amber-400/60 text-xs sm:text-sm font-bold text-slate-200 transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+              className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-amber-400/60 text-[11px] sm:text-sm font-bold text-slate-200 transition-colors flex items-center gap-1 sm:gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
-              <Settings className="w-4 h-4 text-amber-400 shrink-0" />
+              <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
               <span>সেটিংস</span>
             </button>
           </nav>
@@ -192,20 +193,20 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
               <span>বাঙালি স্ট্রিট-লাইফ কমেডি ওপেন-ওয়ার্ল্ড সিমুলেটর</span>
             </p>
 
-            <div className="mt-3">
-              <h1 className="font-bangla font-black text-6xl sm:text-7xl lg:text-[86px] leading-[0.98] text-transparent bg-clip-text bg-gradient-to-br from-amber-100 via-amber-300 to-orange-500 drop-shadow-[0_12px_28px_rgba(245,158,11,0.28)] tracking-tight">
+            <div className="mt-2 sm:mt-3">
+              <h1 className="font-bangla font-black text-5xl sm:text-7xl lg:text-[86px] leading-[0.98] text-transparent bg-clip-text bg-gradient-to-br from-amber-100 via-amber-300 to-orange-500 drop-shadow-[0_12px_28px_rgba(245,158,11,0.28)] tracking-tight">
                 চান্দা দে
               </h1>
-              <div className="font-arcade text-3xl sm:text-5xl font-bold text-white/95 tracking-[0.14em] mt-1">
+              <div className="font-arcade text-2xl sm:text-5xl font-bold text-white/95 tracking-[0.12em] sm:tracking-[0.14em] mt-1">
                 CHANDA DE · DHAKA EDITION
               </div>
             </div>
 
-            <p className="mt-4 text-base sm:text-xl font-bold text-amber-200 font-bangla">
+            <p className="mt-3 sm:mt-4 text-sm sm:text-xl font-bold text-amber-200 font-bangla">
               “এই শহরে সবার গল্প আলাদা!”
             </p>
-            <p className="mt-2 text-sm sm:text-base text-slate-300 max-w-xl leading-relaxed font-bangla">
-              রঙিন রিকশা, চায়ের টং, ৩৮+ দোকান আর মজাদার সব চরিত্রের প্রাণবন্ত শহর। দোকানদারদের সাথে খুনসুটি করুন, ডেলিভারি ও ব্যবসা সাম্রাজ্য গড়ুন, আর পুলিশের মজার তাড়া খেয়ে পালিয়ে বেড়ান!
+            <p className="mt-1.5 sm:mt-2 text-xs sm:text-base text-slate-300 max-w-xl leading-relaxed font-bangla">
+              রঙিন রিকশা, চায়ের টং, ৫০+ দোকান আর মজাদার সব চরিত্রের বিশাল শহর। লাঠি হাতে ভাঙচুর করুন, ডেলিভারি ও ব্যবসা সাম্রাজ্য গড়ুন, আর পুলিশের মজার তাড়া খেয়ে পালিয়ে বেড়ান!
             </p>
 
             {/* Primary CTA Row */}
@@ -256,9 +257,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
             <div className="mt-8 pt-6 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5 w-full">
               <div>
                 <div className="font-arcade text-xl text-amber-400 leading-none">01</div>
-                <div className="mt-1 text-sm font-bold text-white">৩৮+ দোকান</div>
+                <div className="mt-1 text-sm font-bold text-white">৫০+ দোকান</div>
                 <p className="text-xs text-slate-400 mt-0.5 leading-snug">
-                  সমঝোতা, ডেলিভারি ও হাসির সংলাপ
+                  বিশাল শহর, ভাঙচুর ও মজার কাণ্ড
                 </p>
               </div>
               <div>
@@ -302,7 +303,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
               customizations={customizations}
               expression={activeMood.id}
               action={activeMood.action}
-              className="w-full h-[300px] sm:h-[360px] lg:h-[390px]"
+              className="w-full h-[240px] sm:h-[360px] lg:h-[390px]"
             />
 
             {/* Interactive Expression & Pose Controls */}
@@ -413,16 +414,16 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
 
             <div className="text-xs sm:text-sm text-slate-300 space-y-2.5 leading-relaxed">
               <p>
-                <strong>১. শহর অন্বেষণ:</strong> WASD/তির বোতাম অথবা মোবাইলে জয়স্টিক দিয়ে হাঁটুন, Shift চেপে দৌড়ান এবং স্ক্রিন ড্র্যাগ করে ক্যামেরা ঘোরান।
+                <strong>১. শহর অন্বেষণ:</strong> WASD/তির বোতাম অথবা মোবাইলে জয়স্টিক দিয়ে হাঁটুন — জয়স্টিক যেদিকে নেবেন ক্যামেরাও সেদিকে ঘুরবে! Shift বা <strong>জোরে দৌড়</strong> দিয়ে স্প্রিন্ট করুন।
               </p>
               <p>
-                <strong>২. দোকান ও সমঝোতা:</strong> দোকানের সামনে গিয়ে <strong>E</strong> চাপুন। মিষ্টি কথা বা কাজের প্রস্তাব দিয়ে টাকা ও XP অর্জন করুন।
+                <strong>২. লাঠি হাতে দোকান ভাঙচুর:</strong> দোকানের সামনে গিয়ে হাতের লাঠি দিয়ে <strong>F</strong> বা মোবাইলে <strong>লাথি</strong> চেপে ভাঙচুর করুন এবং টাকা ও XP অর্জন করুন।
               </p>
               <p>
-                <strong>৩. এনপিসি কথোপকথন:</strong> শহরের চা দোকানদার, রিকশাচালক, বাস ড্রাইভার ও অন্যান্য 3D চরিত্রের সাথে কথা বলে বিশেষ সুবিধা নিন।
+                <strong>৩. যানবাহন ও ডেলিভারি:</strong> রিকশা, সিএনজি, বাস বা ভ্যানের সামনে গিয়ে দ্রুত অন্য এলাকায় যাতায়াত করুন অথবা ডেলিভারির কাজ নিন।
               </p>
               <p>
-                <strong>৪. কার্টুন ভাঙচুর ও পুলিশ ধাওয়া:</strong> <strong>F</strong> চেপে সাইনবোর্ড বা বেঞ্চে লাথি মারুন। পুলিশ আসলে দৌড়ে পালান!
+                <strong>৪. কার্টুন ভাঙচুর ও পুলিশ ধাওয়া:</strong> সাইনবোর্ড বা বেঞ্চে লাঠি-লাথি মারুন। পুলিশ আসলে দৌড়ে পালান!
               </p>
               <p>
                 <strong>৫. ব্যবসা ও ওয়ার্ডরোব:</strong> উপার্জিত টাকায় ব্যবসা কিনে প্যাসিভ আয় করুন এবং নতুন পোশাক ও সানগ্লাস আনলক করুন।
