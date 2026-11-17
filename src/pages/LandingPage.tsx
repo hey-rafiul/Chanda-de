@@ -1,9 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useGameStore } from '../stores/gameStore';
-import { soundManager } from '../audio/soundManager';
-import { CharacterPreview3D } from './Three/CharacterPreview3D';
-import { CharacterAnimAction } from '../game/three/characterSystem';
-import { HeroExpression } from '../types/game';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import {
   Play,
   RotateCcw,
@@ -14,65 +9,29 @@ import {
   ShieldAlert,
   Sparkles,
 } from 'lucide-react';
+import { SeoLink } from '../seo/router';
 
-interface MainMenuProps {
-  onStartGame: () => void;
+const HeroShowcaseLazy = lazy(() => import('../components/HeroShowcaseLazy'));
+
+interface LandingPageProps {
+  onStartNewGame: () => void;
+  onContinueGame: () => void;
   onOpenSettings: () => void;
 }
 
-const HERO_MOOD_OPTIONS: {
-  id: HeroExpression;
-  action: CharacterAnimAction;
-  label: string;
-  quote: string;
-}[] = [
-  {
-    id: 'neutral',
-    action: 'idle',
-    label: 'স্টাইল',
-    quote: '“চান্দা সিটি ঘুরে দেখতে রেডি? চলেন রাস্তায় নামি!”',
-  },
-  {
-    id: 'happy',
-    action: 'reaction_happy',
-    label: '😄 হাসি',
-    quote: '“চা গরম, মুড ফুরফুরে — আজ পুরো শহর জমবে!”',
-  },
-  {
-    id: 'laugh',
-    action: 'reaction_laugh',
-    label: '🤣 অট্টহাসি',
-    quote: '“হা হা! পুলিশের দৌড় দেখে রিকশা মামাও হাসে!”',
-  },
-  {
-    id: 'shocked',
-    action: 'reaction_shocked',
-    label: '😲 অবাক',
-    quote: '“ওরে বাবা! সামনে কি পুলিশ নাকি বসের গাড়ি?!”',
-  },
-  {
-    id: 'angry',
-    action: 'talk',
-    label: '😠 সিরিয়াস',
-    quote: '“এই এলাকার গল্পটা আজ একটু অন্যভাবে লিখতে হবে!”',
-  },
-];
-
-export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings }) => {
-  const loadGame = useGameStore((state) => state.loadGame);
-  const resetGame = useGameStore((state) => state.resetGame);
-  const equipped = useGameStore((state) => state.equipped);
-  const customizations = useGameStore((state) => state.customizations);
-
+export const LandingPage: React.FC<LandingPageProps> = ({
+  onStartNewGame,
+  onContinueGame,
+  onOpenSettings,
+}) => {
   const [savePreview, setSavePreview] = useState<{ level: number; balance: number } | null>(null);
   const [showNewConfirm, setShowNewConfirm] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
-  const [selectedMoodIdx, setSelectedMoodIdx] = useState(0);
-
-  const activeMood = HERO_MOOD_OPTIONS[selectedMoodIdx] ?? HERO_MOOD_OPTIONS[0];
+  const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
+    setHasMounted(true);
     try {
       const raw =
         localStorage.getItem('chanda_de_save_v2') || localStorage.getItem('chanda_de_save_v1');
@@ -93,21 +52,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
       setShowNewConfirm(true);
       return;
     }
-    soundManager.playRickshawBell();
-    resetGame();
     setShowNewConfirm(false);
-    onStartGame();
-  };
-
-  const handleContinue = () => {
-    if (loadGame()) {
-      soundManager.playCash();
-      onStartGame();
-    }
+    onStartNewGame();
   };
 
   return (
-    <div className="relative w-full h-[100dvh] bg-[#060913] text-slate-100 overflow-y-auto overflow-x-hidden touch-pan-y no-scrollbar select-none">
+    <div className="relative w-full min-h-[100dvh] bg-[#060913] text-slate-100 overflow-x-hidden select-none">
       {/* Dhaka Golden-Hour & Rickshaw Dusk Backdrop */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#060913] via-[#130f26] to-[#1e1312]" />
@@ -140,24 +90,21 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
       </div>
 
       {/* Main Container */}
-      <div className="relative z-10 max-w-6xl mx-auto min-h-full flex flex-col justify-between px-3.5 sm:px-8 py-3.5 sm:py-6 gap-6 sm:gap-8">
-        {/* Clean Mobile-Safe Single-Row Navigation Header */}
+      <div className="relative z-10 max-w-6xl mx-auto min-h-[100dvh] flex flex-col justify-between px-3.5 sm:px-8 py-3.5 sm:py-6 gap-6 sm:gap-8">
+        {/* Clean Single-Row Navigation Header */}
         <header className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 border-b border-slate-800/80 pb-3">
-          <a
-            href="#top"
-            onClick={(e) => e.preventDefault()}
-            className="flex items-baseline gap-2 shrink-0"
-          >
+          <SeoLink to="/" className="flex items-baseline gap-2 shrink-0">
             <span className="font-bangla font-black text-lg sm:text-2xl text-amber-400 tracking-tight whitespace-nowrap">
               চান্দা দে
             </span>
             <span className="hidden sm:inline font-arcade text-lg text-slate-400 tracking-widest whitespace-nowrap">
               CHANDA DE
             </span>
-          </a>
+          </SeoLink>
 
-          <nav className="flex items-center gap-1 sm:gap-4 ml-auto">
+          <nav aria-label="Primary Navigation" className="flex items-center gap-1 sm:gap-4 ml-auto">
             <button
+              type="button"
               onClick={() => setShowHowToPlay(true)}
               className="px-2 sm:px-2.5 py-1.5 text-[11px] sm:text-sm font-semibold text-slate-300 hover:text-amber-300 transition-colors flex items-center gap-1 sm:gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
@@ -167,6 +114,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
             </button>
 
             <button
+              type="button"
               onClick={() => setShowCredits(true)}
               className="px-2 sm:px-2.5 py-1.5 text-[11px] sm:text-sm font-semibold text-slate-300 hover:text-amber-300 transition-colors flex items-center gap-1 sm:gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
@@ -175,6 +123,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
             </button>
 
             <button
+              type="button"
               onClick={onOpenSettings}
               className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-amber-400/60 text-[11px] sm:text-sm font-bold text-slate-200 transition-colors flex items-center gap-1 sm:gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
@@ -206,7 +155,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
               “এই শহরে সবার গল্প আলাদা!”
             </p>
             <p className="mt-1.5 sm:mt-2 text-xs sm:text-base text-slate-300 max-w-xl leading-relaxed font-bangla">
-              রঙিন রিকশা, চায়ের টং, ৫০+ দোকান আর মজাদার সব চরিত্রের বিশাল শহর। লাঠি হাতে ভাঙচুর করুন, ডেলিভারি ও ব্যবসা সাম্রাজ্য গড়ুন, আর পুলিশের মজার তাড়া খেয়ে পালিয়ে বেড়ান!
+              রঙিন রিকশা, চায়ের টং, ৫০+ দোকান আর মজাদার সব চরিত্রের বিশাল শহর। লাঠি হাতে ভাঙচুর
+              করুন, ডেলিভারি ও ব্যবসা সাম্রাজ্য গড়ুন, আর পুলিশের মজার তাড়া খেয়ে পালিয়ে বেড়ান!
             </p>
 
             {/* Primary CTA Row */}
@@ -214,7 +164,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
               {savePreview ? (
                 <>
                   <button
-                    onClick={handleContinue}
+                    type="button"
+                    onClick={onContinueGame}
                     className="py-3.5 px-6 rounded-xl bg-gradient-to-r from-emerald-500 to-green-400 hover:from-emerald-400 hover:to-green-300 text-slate-950 font-black text-base shadow-[0_10px_28px_rgba(16,185,129,0.28)] transition-transform active:scale-95 flex items-center justify-center gap-3 whitespace-nowrap cursor-pointer"
                   >
                     <RotateCcw className="w-5 h-5 shrink-0" />
@@ -225,6 +176,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
                   </button>
 
                   <button
+                    type="button"
                     onClick={handleStartNew}
                     className="py-3.5 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 border border-amber-500/60 hover:border-amber-400 text-amber-300 font-bold text-base transition-colors active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
                   >
@@ -235,6 +187,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
               ) : (
                 <>
                   <button
+                    type="button"
                     onClick={handleStartNew}
                     className="py-4 px-7 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 font-black text-lg shadow-[0_12px_32px_rgba(245,158,11,0.34)] transition-transform active:scale-95 flex items-center justify-center gap-2.5 whitespace-nowrap cursor-pointer"
                   >
@@ -243,6 +196,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setShowHowToPlay(true)}
                     className="py-4 px-5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-amber-400/60 text-slate-200 font-bold text-sm transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
                   >
@@ -288,54 +242,55 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
 
           {/* Right Live Interactive 3D Hero Stage */}
           <section className="lg:col-span-5 flex flex-col gap-3 w-full">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-bold tracking-wide text-amber-300">
-                লাইভ ৩ডি হিরো শোকেস
-              </span>
-              <span className="text-[11px] text-slate-400">
-                ড্র্যাগ করে ৩৬০° ঘুরিয়ে দেখুন
-              </span>
-            </div>
-
-            <CharacterPreview3D
-              mode="hero"
-              equipped={equipped}
-              customizations={customizations}
-              expression={activeMood.id}
-              action={activeMood.action}
-              className="w-full h-[240px] sm:h-[360px] lg:h-[390px]"
-            />
-
-            {/* Interactive Expression & Pose Controls */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              {HERO_MOOD_OPTIONS.map((mood, idx) => {
-                const isSelected = idx === selectedMoodIdx;
-                return (
-                  <button
-                    key={mood.id}
-                    onClick={() => {
-                      soundManager.playDialogueBlip(1.15);
-                      setSelectedMoodIdx(idx);
-                    }}
-                    className={`flex-1 min-w-[70px] py-2 px-2.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap cursor-pointer border ${
-                      isSelected
-                        ? 'bg-amber-400 text-slate-950 border-amber-300'
-                        : 'bg-[#0B101E] text-slate-300 border-slate-800 hover:border-amber-500/50 hover:text-white'
-                    }`}
-                  >
-                    {mood.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <p className="text-xs text-amber-200/85 font-bangla px-1 min-h-[20px]">
-              {activeMood.quote}
-            </p>
+            {hasMounted ? (
+              <Suspense
+                fallback={
+                  <div className="flex flex-col gap-3 w-full">
+                    <div className="flex items-center justify-between px-1">
+                      <span className="text-xs font-bold tracking-wide text-amber-300">
+                        লাইভ ৩ডি হিরো শোকেস
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        ড্র্যাগ করে ৩৬০° ঘুরিয়ে দেখুন
+                      </span>
+                    </div>
+                    <img
+                      src="/images/chanda-de-hero-open-world.webp"
+                      alt="CHANDA DE Bangladeshi 3D open-world cartoon game hero in Chanda City"
+                      width={1280}
+                      height={720}
+                      fetchPriority="high"
+                      className="w-full h-[240px] sm:h-[360px] lg:h-[390px] object-cover rounded-2xl border border-slate-800"
+                    />
+                  </div>
+                }
+              >
+                <HeroShowcaseLazy />
+              </Suspense>
+            ) : (
+              <div className="flex flex-col gap-3 w-full">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs font-bold tracking-wide text-amber-300">
+                    লাইভ ৩ডি হিরো শোকেস
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    ড্র্যাগ করে ৩৬০° ঘুরিয়ে দেখুন
+                  </span>
+                </div>
+                <img
+                  src="/images/chanda-de-hero-open-world.webp"
+                  alt="CHANDA DE Bangladeshi 3D open-world cartoon game hero in Chanda City"
+                  width={1280}
+                  height={720}
+                  fetchPriority="high"
+                  className="w-full h-[240px] sm:h-[360px] lg:h-[390px] object-cover rounded-2xl border border-slate-800"
+                />
+              </div>
+            )}
           </section>
         </main>
 
-        {/* Visible Entertainment Disclaimer & Footer */}
+        {/* Visible Entertainment Disclaimer & Compact Footer with SEO Page Links */}
         <footer className="flex flex-col gap-4 pb-2">
           <div
             role="note"
@@ -352,15 +307,31 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
               <span className="text-slate-300">
                 ‘চান্দা দে (CHANDA DE)’ গেমটি সম্পূর্ণ কাল্পনিক এবং{' '}
                 <strong className="text-white font-bold">
-                  শুধুমাত্র নিখাদ বিনোদন ও হাস্যরসের (Entertainment &amp; Comedy) উদ্দেশ্যে তৈরি করা হয়েছে।
+                  শুধুমাত্র নিখাদ বিনোদন ও হাস্যরসের (Entertainment &amp; Comedy) উদ্দেশ্যে তৈরি
+                  করা হয়েছে।
                 </strong>{' '}
-                এর কোনো চরিত্র, ঘটনা, এলাকা বা সংলাপের সাথে বাস্তব জীবনের কোনো ব্যক্তি, পেশা কিংবা প্রতিষ্ঠানের সম্পর্ক নেই এবং কোনো বেআইনি কাজকে উৎসাহিত করা হয় না।
+                এর কোনো চরিত্র, ঘটনা, এলাকা বা সংলাপের সাথে বাস্তব জীবনের কোনো ব্যক্তি, পেশা
+                কিংবা প্রতিষ্ঠানের সম্পর্ক নেই এবং কোনো বেআইনি কাজকে উৎসাহিত করা হয় না।
               </span>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400 border-t border-slate-800/70 pt-3">
             <span>© 2026 Chanda De Studio · কাল্পনিক শহুরে কমেডি সিমুলেশন</span>
+            <nav aria-label="Game Pages" className="flex items-center gap-4 text-xs text-slate-400">
+              <SeoLink to="/about" className="hover:text-amber-300 transition-colors">
+                About
+              </SeoLink>
+              <SeoLink to="/how-to-play" className="hover:text-amber-300 transition-colors">
+                How to Play
+              </SeoLink>
+              <SeoLink to="/features" className="hover:text-amber-300 transition-colors">
+                Features
+              </SeoLink>
+              <SeoLink to="/updates" className="hover:text-amber-300 transition-colors">
+                Updates
+              </SeoLink>
+            </nav>
             <span className="font-medium text-slate-300">
               Developed By <span className="text-amber-300 font-bold">MD Rafiul Islam</span>
             </span>
@@ -379,12 +350,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
             </p>
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={handleStartNew}
                 className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs cursor-pointer"
               >
                 হ্যাঁ, নতুন শুরু করুন
               </button>
               <button
+                type="button"
                 onClick={() => setShowNewConfirm(false)}
                 className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs cursor-pointer"
               >
@@ -405,6 +378,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
                 <span>খেলার নিয়ম ও উদ্দেশ্য</span>
               </h3>
               <button
+                type="button"
                 onClick={() => setShowHowToPlay(false)}
                 className="text-slate-400 hover:text-white px-2 py-1 cursor-pointer"
               >
@@ -414,23 +388,31 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
 
             <div className="text-xs sm:text-sm text-slate-300 space-y-2.5 leading-relaxed">
               <p>
-                <strong>১. শহর অন্বেষণ:</strong> WASD/তির বোতাম অথবা মোবাইলে জয়স্টিক দিয়ে হাঁটুন — জয়স্টিক যেদিকে নেবেন ক্যামেরাও সেদিকে ঘুরবে! Shift বা <strong>জোরে দৌড়</strong> দিয়ে স্প্রিন্ট করুন।
+                <strong>১. শহর অন্বেষণ:</strong> WASD/তির বোতাম অথবা মোবাইলে জয়স্টিক দিয়ে হাঁটুন —
+                জয়স্টিক যেদিকে নেবেন ক্যামেরাও সেদিকে ঘুরবে! Shift বা <strong>জোরে দৌড়</strong> দিয়ে
+                স্প্রিন্ট করুন।
               </p>
               <p>
-                <strong>২. লাঠি হাতে দোকান ভাঙচুর:</strong> দোকানের সামনে গিয়ে হাতের লাঠি দিয়ে <strong>F</strong> বা মোবাইলে <strong>লাথি</strong> চেপে ভাঙচুর করুন এবং টাকা ও XP অর্জন করুন।
+                <strong>২. লাঠি হাতে দোকান ভাঙচুর:</strong> দোকানের সামনে গিয়ে হাতের লাঠি দিয়ে{' '}
+                <strong>F</strong> বা মোবাইলে <strong>লাথি</strong> চেপে ভাঙচুর করুন এবং টাকা ও XP
+                অর্জন করুন।
               </p>
               <p>
-                <strong>৩. যানবাহন ও ডেলিভারি:</strong> রিকশা, সিএনজি, বাস বা ভ্যানের সামনে গিয়ে দ্রুত অন্য এলাকায় যাতায়াত করুন অথবা ডেলিভারির কাজ নিন।
+                <strong>৩. যানবাহন ও ডেলিভারি:</strong> রিকশা, সিএনজি, বাস বা ভ্যানের সামনে গিয়ে
+                দ্রুত অন্য এলাকায় যাতায়াত করুন অথবা ডেলিভারির কাজ নিন।
               </p>
               <p>
-                <strong>৪. কার্টুন ভাঙচুর ও পুলিশ ধাওয়া:</strong> সাইনবোর্ড বা বেঞ্চে লাঠি-লাথি মারুন। পুলিশ আসলে দৌড়ে পালান!
+                <strong>৪. কার্টুন ভাঙচুর ও পুলিশ ধাওয়া:</strong> সাইনবোর্ড বা বেঞ্চে লাঠি-লাথি
+                মারুন। পুলিশ আসলে দৌড়ে পালান!
               </p>
               <p>
-                <strong>৫. ব্যবসা ও ওয়ার্ডরোব:</strong> উপার্জিত টাকায় ব্যবসা কিনে প্যাসিভ আয় করুন এবং নতুন পোশাক ও সানগ্লাস আনলক করুন।
+                <strong>৫. ব্যবসা ও ওয়ার্ডরোব:</strong> উপার্জিত টাকায় ব্যবসা কিনে প্যাসিভ আয় করুন
+                এবং নতুন পোশাক ও সানগ্লাস আনলক করুন।
               </p>
             </div>
 
             <button
+              type="button"
               onClick={() => setShowHowToPlay(false)}
               className="mt-2 w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm cursor-pointer"
             >
@@ -447,12 +429,15 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenSettings 
             <div className="text-4xl">👑</div>
             <h3 className="font-bold text-white text-xl">চান্দা দে — CHANDA DE</h3>
             <p className="text-xs text-slate-300 leading-relaxed">
-              একটি কাল্পনিক সামাজিক স্যাটায়ার ও কমেডি ওপেন-ওয়ার্ল্ড গেম। বাংলাদেশী রিকশা আর্ট, রঙিন চায়ের স্টল, ট্রাফিক এবং শহুরে সংস্কৃতির ভালোবাসায় শুধুমাত্র বিনোদনের জন্য নির্মিত।
+              একটি কাল্পনিক সামাজিক স্যাটায়ার ও কমেডি ওপেন-ওয়ার্ল্ড গেম। বাংলাদেশী রিকশা আর্ট,
+              রঙিন চায়ের স্টল, ট্রাফিক এবং শহুরে সংস্কৃতির ভালোবাসায় শুধুমাত্র বিনোদনের জন্য
+              নির্মিত।
             </p>
             <div className="text-[11px] text-amber-400 font-medium">
               React 19 • TypeScript • Three.js • Zustand • Web Audio API
             </div>
             <button
+              type="button"
               onClick={() => setShowCredits(false)}
               className="mt-2 w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs cursor-pointer"
             >

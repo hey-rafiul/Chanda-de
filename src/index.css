@@ -1,21 +1,24 @@
 @import "tailwindcss";
 
 @layer base {
-  html,
+  html {
+    min-height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
+
   body,
   #root {
-    height: 100%;
+    min-height: 100%;
     width: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden;
-    overscroll-behavior: none;
+    overscroll-behavior-x: none;
   }
 
   body {
     font-family: 'Hind Siliguri', system-ui, -apple-system, sans-serif;
-    user-select: none;
-    -webkit-user-select: none;
     touch-action: manipulation;
     background-color: #070a12;
     color: #f8fafc;

@@ -13,7 +13,6 @@ class SoundManager {
   private chandaRefusalClips: HTMLAudioElement[] = [];
   private nextRefusalClipIndex = Math.random() < 0.5 ? 0 : 1;
   private shopRefusalClipMap: Map<string, number> = new Map();
-  private shopRefusalPlayedSet: Set<string> = new Set();
   private lastRefusalVoiceTime = 0;
   private pendingRefusalAfterChanda = false;
   private pendingMolomAfterRefusal = false;
@@ -121,10 +120,6 @@ class SoundManager {
     if (this.vangchurClips[0] && !this.vangchurClips[0].paused) {
       this.vangchurClips[0].pause();
     }
-  }
-
-  public hasPlayedRefusalForShop(shopId: string): boolean {
-    return this.shopRefusalPlayedSet.has(shopId);
   }
 
   private pauseAllChandaDialogues() {
@@ -306,9 +301,6 @@ class SoundManager {
         this.shopRefusalClipMap.set(shopId, clipIdx);
       }
     }
-    if (shopId) {
-      this.shopRefusalPlayedSet.add(shopId);
-    }
 
     const activeClip = this.chandaRefusalClips[clipIdx];
     if (!activeClip) return;
@@ -341,33 +333,8 @@ class SoundManager {
     }
   }
 
-  // Wait for "এই, চান্দা দে!" to finish if currently playing, then play that shop's refusal clip once
-  public playChandaRefusalAfterChandaDe(shopId?: string) {
-    if (!this.soundEnabled || typeof window === 'undefined') return;
-    if (this.chandaDeAudio && !this.chandaDeAudio.paused && !this.chandaDeAudio.ended) {
-      this.pendingRefusalAfterChanda = true;
-      this.pendingRefusalShopId = shopId;
-      return;
-    }
-    if (shopId && this.shopRefusalPlayedSet.has(shopId)) {
-      return;
-    }
-    const refusalPlaying = this.chandaRefusalClips.some((c) => !c.paused && !c.ended);
-    if (refusalPlaying || Date.now() - this.lastRefusalVoiceTime < 3500) {
-      return;
-    }
-    this.playChandaRefusalVoice(true, shopId, true);
-  }
-
-  public cancelPendingRefusal() {
-    this.pendingRefusalAfterChanda = false;
-    this.pendingMolomAfterRefusal = false;
-    this.pendingRefusalShopId = undefined;
-  }
-
   public resetShopRefusals() {
     this.shopRefusalClipMap.clear();
-    this.shopRefusalPlayedSet.clear();
     this.pendingRefusalAfterChanda = false;
     this.pendingMolomAfterRefusal = false;
     this.pendingRefusalShopId = undefined;

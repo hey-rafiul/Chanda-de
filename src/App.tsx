@@ -1,134 +1,108 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
-import { useGameStore } from './stores/gameStore';
-import { GameCanvas } from './components/GameCanvas';
-import { GameHUD } from './components/HUD/GameHUD';
-import { BottomDock } from './components/HUD/BottomDock';
-import { MobileControls } from './components/HUD/MobileControls';
-import { MainMenu } from './components/MainMenu';
-import { ChandaCityScene, SceneInteractionTarget } from './game/three/ChandaCityScene';
+import React, { Suspense, lazy, useState, useCallback } from 'react';
+import { RouterProvider, useSeoRouter } from './seo/router';
+import { SiteLayout } from './components/Site/SiteLayout';
+import { LandingPage } from './pages/LandingPage';
+import { AboutPage } from './pages/AboutPage';
+import { HowToPlayPage } from './pages/HowToPlayPage';
+import { FeaturesPage } from './pages/FeaturesPage';
+import { UpdatesPage } from './pages/UpdatesPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 
-// Modals
-import { VehicleModal } from './components/Modals/VehicleModal';
-import { DestructionRepairModal } from './components/Modals/DestructionRepairModal';
-import { BusinessModal } from './components/Modals/BusinessModal';
-import { CustomizationModal } from './components/Modals/CustomizationModal';
-import { MissionsModal } from './components/Modals/MissionsModal';
-import { WorldMapModal } from './components/Modals/WorldMapModal';
-import { SettingsModal } from './components/Modals/SettingsModal';
-import { PoliceEncounterModal } from './components/Modals/PoliceEncounterModal';
-import { PauseMenu } from './components/Modals/PauseMenu';
-import { InventoryModal } from './components/Modals/InventoryModal';
-import { EconomyModal } from './components/Modals/EconomyModal';
-import { AchievementsModal } from './components/Modals/AchievementsModal';
+const GameExperience = lazy(() => import('./components/GameExperience'));
+const SettingsOverlayLazy = lazy(() => import('./components/SettingsOverlayLazy'));
 
-export default function App() {
-  const gameMode = useGameStore((state) => state.gameMode);
-  const setGameMode = useGameStore((state) => state.setGameMode);
-  const activeModal = useGameStore((state) => state.activeModal);
-  const openModal = useGameStore((state) => state.openModal);
-  const closeModal = useGameStore((state) => state.closeModal);
+interface AppProps {
+  initialPath?: string;
+}
 
-  const sceneRef = useRef<ChandaCityScene | null>(null);
-  const [nearbyTarget, setNearbyTarget] = useState<SceneInteractionTarget | null>(null);
-  const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
+const PageRenderer: React.FC<{
+  onStartNewGame: () => void;
+  onContinueGame: () => void;
+  onSmartPlay: () => void;
+  onOpenSettings: () => void;
+}> = ({ onStartNewGame, onContinueGame, onSmartPlay, onOpenSettings }) => {
+  const { path } = useSeoRouter();
 
-  // ESC toggles modals, command menu, or Pause menu
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (activeModal) {
-          closeModal();
-        } else if (isCommandMenuOpen) {
-          setIsCommandMenuOpen(false);
-        } else if (gameMode === 'playing') {
-          setGameMode('paused');
-        } else if (gameMode === 'paused') {
-          setGameMode('playing');
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeModal, isCommandMenuOpen, gameMode, closeModal, setGameMode]);
-
-  const handleTeleport = useCallback((position: [number, number, number]) => {
-    sceneRef.current?.teleportPlayer(position);
-  }, []);
-
-  const handleInteract = useCallback(() => {
-    sceneRef.current?.triggerInteraction();
-  }, []);
-
-  const handleSmash = useCallback(() => {
-    sceneRef.current?.triggerAttackOrSmash();
-  }, []);
-
-  if (gameMode === 'menu') {
+  if (path === '/') {
     return (
-      <>
-        <MainMenu
-          onStartGame={() => setGameMode('playing')}
-          onOpenSettings={() => openModal('settings')}
-        />
-        {activeModal === 'settings' && <SettingsModal />}
-      </>
+      <LandingPage
+        onStartNewGame={onStartNewGame}
+        onContinueGame={onContinueGame}
+        onOpenSettings={onOpenSettings}
+      />
     );
   }
 
   return (
-    <div className="relative w-full h-[100dvh] bg-[#070a12] overflow-hidden select-none">
-      {/* 3D WebGL Canvas Layer */}
-      <GameCanvas
-        sceneRef={sceneRef}
-        onNearbyTargetChange={setNearbyTarget}
-      />
+    <SiteLayout onPlayNow={onSmartPlay}>
+      {path === '/about' && <AboutPage onPlayNow={onStartNewGame} />}
+      {path === '/how-to-play' && <HowToPlayPage onPlayNow={onStartNewGame} />}
+      {path === '/features' && <FeaturesPage onPlayNow={onStartNewGame} />}
+      {path === '/updates' && <UpdatesPage onPlayNow={onStartNewGame} />}
+      {path === '/404' && <NotFoundPage onPlayNow={onStartNewGame} />}
+    </SiteLayout>
+  );
+};
 
-      {/* Modern HUD Layer */}
-      <GameHUD
-        nearbyTarget={nearbyTarget}
-        isMenuOpen={isCommandMenuOpen}
-        onToggleMenu={() => setIsCommandMenuOpen((v) => !v)}
-        onOpenFullMap={() => {
-          setIsCommandMenuOpen(false);
-          openModal('map');
-        }}
-        onOpenEconomy={() => {
-          setIsCommandMenuOpen(false);
-          openModal('economy');
-        }}
-        onInteract={handleInteract}
-        onSmash={handleSmash}
-      />
+export default function App({ initialPath }: AppProps) {
+  const [launchMode, setLaunchMode] = useState<'new' | 'continue' | null>(null);
+  const [showSiteSettings, setShowSiteSettings] = useState(false);
 
-      {/* Mobile Touch Controls Layer */}
-      <MobileControls
-        sceneRef={sceneRef}
-        onSmash={handleSmash}
-      />
+  const handleStartNew = useCallback(() => {
+    setShowSiteSettings(false);
+    setLaunchMode('new');
+  }, []);
 
-      {/* Top-Anchored Command Menu Overlay */}
-      <BottomDock
-        isOpen={isCommandMenuOpen}
-        onClose={() => setIsCommandMenuOpen(false)}
-        onOpenModal={openModal}
-        onPause={() => setGameMode('paused')}
-      />
+  const handleContinue = useCallback(() => {
+    setShowSiteSettings(false);
+    setLaunchMode('continue');
+  }, []);
 
-      {/* Pause Menu */}
-      {gameMode === 'paused' && !activeModal && <PauseMenu />}
+  const handleSmartPlay = useCallback(() => {
+    setShowSiteSettings(false);
+    try {
+      const hasSave =
+        Boolean(localStorage.getItem('chanda_de_save_v2')) ||
+        Boolean(localStorage.getItem('chanda_de_save_v1'));
+      setLaunchMode(hasSave ? 'continue' : 'new');
+    } catch {
+      setLaunchMode('new');
+    }
+  }, []);
 
-      {/* Interactive Gameplay Modals */}
-      {activeModal === 'vehicle' && <VehicleModal onTeleport={handleTeleport} />}
-      {activeModal === 'repair' && <DestructionRepairModal />}
-      {activeModal === 'business' && <BusinessModal />}
-      {activeModal === 'customization' && <CustomizationModal />}
-      {activeModal === 'missions' && <MissionsModal />}
-      {activeModal === 'map' && <WorldMapModal onTeleport={handleTeleport} />}
-      {activeModal === 'settings' && <SettingsModal />}
-      {activeModal === 'police_encounter' && <PoliceEncounterModal />}
-      {activeModal === 'inventory' && <InventoryModal />}
-      {activeModal === 'economy' && <EconomyModal />}
-      {activeModal === 'achievements' && <AchievementsModal />}
-    </div>
+  return (
+    <RouterProvider initialPath={initialPath}>
+      {launchMode ? (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 z-50 bg-[#070a12] text-white flex flex-col items-center justify-center gap-3 p-6 text-center">
+              <div className="w-10 h-10 rounded-full border-4 border-amber-400 border-t-transparent animate-spin" />
+              <p className="text-base font-bold text-amber-300">
+                চান্দা সিটি লোড হচ্ছে... (Loading 3D Chanda City)
+              </p>
+              <p className="text-xs text-slate-400">
+                Preparing 3D streets, vehicles, shops, and audio
+              </p>
+            </div>
+          }
+        >
+          <GameExperience launchMode={launchMode} onExitToSite={() => setLaunchMode(null)} />
+        </Suspense>
+      ) : (
+        <>
+          <PageRenderer
+            onStartNewGame={handleStartNew}
+            onContinueGame={handleContinue}
+            onSmartPlay={handleSmartPlay}
+            onOpenSettings={() => setShowSiteSettings(true)}
+          />
+          {showSiteSettings && (
+            <Suspense fallback={null}>
+              <SettingsOverlayLazy onClose={() => setShowSiteSettings(false)} />
+            </Suspense>
+          )}
+        </>
+      )}
+    </RouterProvider>
   );
 }

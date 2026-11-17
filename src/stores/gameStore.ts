@@ -183,8 +183,6 @@ export interface GameState {
   equipCustomization: (type: keyof EquippedOutfit, id: string) => void;
 
   // World controls
-  setTimeOfDay: (time: TimeOfDay) => void;
-  setWeather: (weather: WeatherType) => void;
   advanceGameTime: (deltaMinutes: number) => void;
   triggerRandomEvent: () => void;
   clearEvent: () => void;
@@ -1184,21 +1182,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       },
     }));
     get().saveGame();
-  },
-
-  setTimeOfDay: (time) => {
-    const minsMap: Record<TimeOfDay, number> = {
-      morning: 540,
-      afternoon: 840,
-      evening: 1080,
-      night: 1320,
-    };
-    set({ timeOfDay: time, gameTimeMinutes: minsMap[time] });
-  },
-
-  setWeather: (weather) => {
-    soundManager.setRain(weather === 'rainy' || weather === 'stormy');
-    set({ weather });
   },
 
   advanceGameTime: (deltaMinutes) => {
