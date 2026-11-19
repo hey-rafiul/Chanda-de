@@ -19,7 +19,7 @@ const DEFAULT_LOGO_PATH = '/images/chanda-de-logo.png';
 export const SEO_PAGES: Record<PublicRoutePath | '/404', PageSeoMeta> = {
   '/': {
     path: '/',
-    title: 'CHANDA DE (চান্দা দে) – Free Bangladeshi 3D Open World Browser Game',
+    title: 'Chanda De Game – Free Bangladeshi 3D Open World Browser Game',
     description:
       'Play CHANDA DE (চান্দা দে), a fun Bangladeshi 3D open-world cartoon game. Explore Chanda City, interact with NPCs, complete missions, discover shops and enjoy a unique browser gaming experience.',
     keywords:
