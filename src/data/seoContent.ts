@@ -1,4 +1,4 @@
-export interface FeatureDetail {
+interface FeatureDetail {
   id: string;
   number: string;
   titleEn: string;
@@ -7,20 +7,20 @@ export interface FeatureDetail {
   highlights: string[];
 }
 
-export interface CharacterProfile {
+interface CharacterProfile {
   nameEn: string;
   nameBn: string;
   role: string;
   description: string;
 }
 
-export interface CityZoneInfo {
+interface CityZoneInfo {
   nameEn: string;
   nameBn: string;
   description: string;
 }
 
-export interface GameUpdateEntry {
+interface GameUpdateEntry {
   version: string;
   date: string;
   title: string;

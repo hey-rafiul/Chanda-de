@@ -20,25 +20,26 @@ export const DestructionRepairModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90">
-      <div className="relative w-full max-w-2xl rounded-3xl bg-[#0B101E] border-2 border-orange-500/60 shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]">
+      <div className="relative w-full max-w-2xl rounded-3xl bd-signboard overflow-hidden flex flex-col max-h-[90dvh]">
+        <div className="h-2 w-full bd-awning-gold shrink-0" />
         {/* Header */}
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-600/25 to-slate-900 border-b border-slate-800">
+        <div className="flex items-center justify-between p-4 bd-tin-trim bg-gradient-to-r from-orange-900/45 via-[#17120e] to-slate-900 border-b border-amber-500/35">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center text-slate-950 font-black text-xl">
+            <div className="w-10 h-10 rounded-xl bg-amber-400 flex items-center justify-center text-slate-950 font-black text-xl shadow">
               🔧
             </div>
             <div>
-              <h2 className="font-bold text-white text-base sm:text-lg leading-tight">
-                ভাঙচুর ও মেরামত ওয়ার্কশপ
+              <h2 className="font-bold text-amber-100 text-base sm:text-lg leading-tight">
+                কালাম মিস্ত্রির ভাঙচুর ও মেরামত ওয়ার্কশপ
               </h2>
-              <div className="text-xs text-slate-400">
-                আংশিক বা সম্পূর্ণ ভাঙা শহরের জিনিস ঠিক করুন
+              <div className="text-xs text-amber-200/75">
+                বাজারের ভাঙা দোকানপাট, সাইনবোর্ড ও বেঞ্চ মেরামত ঘর
               </div>
             </div>
           </div>
           <button
             onClick={closeModal}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-amber-500/35 text-amber-200 hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

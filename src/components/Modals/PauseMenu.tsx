@@ -40,14 +40,18 @@ export const PauseMenu: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/90">
-      <div className="w-full max-w-sm rounded-3xl bg-[#0B101E] border-2 border-amber-500/60 shadow-2xl p-5 sm:p-6 flex flex-col gap-3.5 sm:gap-4 text-center max-h-[90dvh] overflow-y-auto no-scrollbar">
-        <div>
-          <div className="text-xs font-bold text-amber-400 uppercase tracking-widest">PAUSE</div>
-          <h2 className="font-bold text-white text-2xl mt-0.5">খেলা বিরতি</h2>
-          <p className="text-xs text-slate-400 mt-1 tabular-nums">
-            {playerStats.name} • Lv.{playerStats.level} • ৳{playerStats.balance.toLocaleString()}
-          </p>
-        </div>
+      <div className="w-full max-w-sm rounded-3xl bd-signboard overflow-hidden flex flex-col max-h-[90dvh]">
+        <div className="h-2 w-full bd-awning-stripe shrink-0" />
+        <div className="p-5 sm:p-6 flex flex-col gap-3.5 sm:gap-4 text-center overflow-y-auto no-scrollbar">
+          <div>
+            <div className="text-xs font-bold text-amber-400 uppercase tracking-widest">
+              চান্দা বাজার • বিরতি
+            </div>
+            <h2 className="font-bold text-amber-100 text-2xl mt-0.5">খেলা বিরতি</h2>
+            <p className="text-xs text-amber-200/80 mt-1 tabular-nums">
+              {playerStats.name} • Lv.{playerStats.level} • ৳{playerStats.balance.toLocaleString()}
+            </p>
+          </div>
 
         <div className="flex flex-col gap-2.5 pt-1">
           <button
@@ -106,6 +110,7 @@ export const PauseMenu: React.FC = () => {
               </button>
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

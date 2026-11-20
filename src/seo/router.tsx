@@ -63,7 +63,7 @@ function upsertJsonLdScript(data: Record<string, unknown>): void {
   script.textContent = JSON.stringify(data);
 }
 
-export function syncDocumentHeadForPath(routePath: PublicRoutePath | '/404'): void {
+function syncDocumentHeadForPath(routePath: PublicRoutePath | '/404'): void {
   if (typeof document === 'undefined') return;
   const meta = SEO_PAGES[routePath] || SEO_PAGES['/404'];
   const origin = resolveRuntimeOrigin();
@@ -108,13 +108,14 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ initialPath, chi
 
   useEffect(() => {
     const handlePopState = () => {
-      const next = normalizeRoutePath(window.location.pathname);
-      setPath(next);
-      syncDocumentHeadForPath(next);
+      setPath(normalizeRoutePath(window.location.pathname));
     };
     window.addEventListener('popstate', handlePopState);
-    syncDocumentHeadForPath(path);
     return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    syncDocumentHeadForPath(path);
   }, [path]);
 
   const navigate = useCallback((to: string) => {
@@ -126,7 +127,6 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ initialPath, chi
       window.history.pushState({}, '', to);
     }
     setPath(nextPath);
-    syncDocumentHeadForPath(nextPath);
 
     if (hashPart) {
       window.setTimeout(() => {

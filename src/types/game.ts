@@ -12,9 +12,9 @@ export type NPCArchetype =
   | 'female_citizen'
   | 'boss_villain';
 
-export type NPCMood = 'friendly' | 'busy' | 'alert' | 'cheerful' | 'intimidating';
+type NPCMood = 'friendly' | 'busy' | 'alert' | 'cheerful' | 'intimidating';
 
-export interface NPCInteractionAction {
+interface NPCInteractionAction {
   id: string;
   labelBn: string;
   sublabelBn: string;

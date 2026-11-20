@@ -3062,6 +3062,7 @@ export const INITIAL_BUSINESS_ITEMS: BusinessItem[] = [
 
 export const INITIAL_CUSTOMIZATION: CustomizationItem[] = [
   // Shirts & Tops
+  { id: 'shirt_black_polo', name: 'Hero Black Fitted Polo', nameBn: 'হিরো কালো পলো টি-শার্ট', type: 'shirt', color: '#14161a', unlocked: true, price: 0, styleName: 'black_polo' },
   { id: 'shirt_black_floral', name: 'Black Floral Open Shirt & White Tee', nameBn: 'কালো ফুলের শার্ট ও সাদা টি-শার্ট', type: 'shirt', color: '#111827', unlocked: true, price: 0, styleName: 'black_floral' },
   { id: 'shirt_default', name: 'Casual Red Kurta', nameBn: 'লাল পাঞ্জাবি', type: 'shirt', color: '#dc2626', unlocked: true, price: 0, styleName: 'red_kurta' },
   { id: 'shirt_white_punjabi', name: 'Royal White Punjabi', nameBn: 'সাদা এমব্রয়ডারি পাঞ্জাবি', type: 'shirt', color: '#f8fafc', unlocked: false, price: 450, styleName: 'white_punjabi' },
@@ -3093,6 +3094,7 @@ export const INITIAL_CUSTOMIZATION: CustomizationItem[] = [
   { id: 'hat_boss_crown', name: 'Golden King Crown', nameBn: 'চান্দা দে রাজমুকুট', type: 'hat', color: '#fbbf24', unlocked: false, price: 5000, styleName: 'crown' },
 
   // Shoes & Sneakers
+  { id: 'shoes_combat_boots', name: 'Black Tactical Combat Boots', nameBn: 'কালো কমব্যাট বুট', type: 'shoes', color: '#141518', unlocked: true, price: 0, styleName: 'combat_boots' },
   { id: 'shoes_white_red', name: 'White & Red Sneakers', nameBn: 'সাদা-লাল স্নিকার্স', type: 'shoes', color: '#dc2626', unlocked: true, price: 0, styleName: 'white_red' },
   { id: 'shoes_black_white', name: 'Black & White Sneakers', nameBn: 'কালো-সাদা স্নিকার্স', type: 'shoes', color: '#18181b', unlocked: false, price: 320, styleName: 'black_white' },
   { id: 'shoes_gold_loafers', name: 'VIP Golden Loafers', nameBn: 'সোনালী ভিআইপি জুতা', type: 'shoes', color: '#eab308', unlocked: false, price: 900, styleName: 'gold_loafers' },

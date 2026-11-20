@@ -15,25 +15,26 @@ export const BusinessModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90">
-      <div className="relative w-full max-w-2xl rounded-3xl bg-[#0B101E] border-2 border-emerald-500/60 shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]">
+      <div className="relative w-full max-w-2xl rounded-3xl bd-signboard overflow-hidden flex flex-col max-h-[90dvh]">
+        <div className="h-2 w-full bd-awning-stripe shrink-0" />
         {/* Header */}
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-600/30 to-slate-900 border-b border-slate-800">
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-950/70 via-[#0d1c16] to-slate-900 border-b border-amber-500/30">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-xl">
-              🏢
+            <div className="w-10 h-10 rounded-xl bg-amber-400 flex items-center justify-center text-slate-950 font-black text-xl shadow">
+              🏪
             </div>
             <div>
-              <h2 className="font-bold text-white text-base sm:text-lg leading-tight">
-                ব্যবসা সাম্রাজ্য (Business Empire)
+              <h2 className="font-bold text-amber-100 text-base sm:text-lg leading-tight">
+                দোকান ও ব্যবসা সাম্রাজ্য (Dokaan Empire)
               </h2>
-              <div className="text-xs text-slate-400">
-                Chanda City Passive Income & Headquarters
+              <div className="text-xs text-amber-200/75">
+                চান্দা বাজারের নিজস্ব দোকান, রিকশা বহর ও প্যাসিভ আয়
               </div>
             </div>
           </div>
           <button
             onClick={closeModal}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all"
+            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-amber-500/35 text-amber-200 hover:text-white transition-all"
           >
             <X className="w-5 h-5" />
           </button>

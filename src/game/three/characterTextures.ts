@@ -330,6 +330,52 @@ export function getShirtTexture(styleName: string, baseHex = '#111827'): THREE.C
     return finalizeCharTexture(key, canvas);
   }
 
+  if (styleName === 'black_polo') {
+    // Deep matte charcoal-black athletic polo pique fabric matching Hero reference
+    ctx.fillStyle = '#15171c';
+    ctx.fillRect(0, 0, 256, 256);
+
+    // Subtle faceted / pique knit micro-shading
+    for (let y = 0; y < 256; y += 8) {
+      for (let x = 0; x < 256; x += 8) {
+        if (((x + y) / 8) % 2 === 0) {
+          ctx.fillStyle = 'rgba(255,255,255,0.025)';
+          ctx.fillRect(x, y, 4, 4);
+        } else {
+          ctx.fillStyle = 'rgba(0,0,0,0.12)';
+          ctx.fillRect(x + 2, y + 2, 4, 4);
+        }
+      }
+    }
+
+    // Subtle chest contour highlight & hem seam
+    const chestGrad = ctx.createLinearGradient(0, 20, 0, 170);
+    chestGrad.addColorStop(0, 'rgba(255,255,255,0.05)');
+    chestGrad.addColorStop(0.5, 'rgba(255,255,255,0.015)');
+    chestGrad.addColorStop(1, 'rgba(0,0,0,0.18)');
+    ctx.fillStyle = chestGrad;
+    ctx.fillRect(24, 24, 208, 180);
+
+    // Polo V-placket with dark stitched edge & 2 matte buttons
+    ctx.fillStyle = '#0d0f13';
+    ctx.fillRect(117, 0, 22, 82);
+    ctx.strokeStyle = '#2a2e38';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(117, 0, 22, 82);
+
+    ctx.fillStyle = '#383d47';
+    [32, 58].forEach((by) => {
+      ctx.beginPath();
+      ctx.arc(128, by, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Bottom polo hem double-stitch
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.fillRect(0, 242, 256, 2);
+    return finalizeCharTexture(key, canvas);
+  }
+
   // Classic solid / T-shirt / tea vendor / beige rickshaw shirt
   ctx.fillStyle = baseHex;
   ctx.fillRect(0, 0, 256, 256);
@@ -387,11 +433,51 @@ export function getBottomTexture(styleName: string, baseHex = '#1e293b'): THREE.
     return finalizeCharTexture(key, canvas);
   }
 
-  // Cargo jeans / Denim / Khaki / Navy / White trousers
+  if (styleName === 'black_cargo') {
+    // Charcoal tactical camo-faceted cargo fabric matching Hero reference
+    ctx.fillStyle = '#25282e';
+    ctx.fillRect(0, 0, 256, 256);
+
+    const patches = [
+      [12, 16, 56, 42, '#1d2025'],
+      [88, 8, 72, 48, '#2f333b'],
+      [182, 24, 62, 44, '#1b1d22'],
+      [34, 82, 68, 52, '#2d3138'],
+      [126, 74, 58, 46, '#1b1e23'],
+      [194, 96, 54, 48, '#31353e'],
+      [18, 154, 64, 54, '#1c1e23'],
+      [104, 148, 74, 48, '#2c3037'],
+      [190, 166, 58, 56, '#1a1c21'],
+      [54, 212, 76, 38, '#30343c'],
+      [148, 206, 68, 44, '#1e2026'],
+    ] as const;
+
+    patches.forEach(([px, py, pw, ph, pcol]) => {
+      ctx.fillStyle = pcol;
+      ctx.beginPath();
+      ctx.moveTo(px, py + ph * 0.25);
+      ctx.lineTo(px + pw * 0.45, py);
+      ctx.lineTo(px + pw, py + ph * 0.35);
+      ctx.lineTo(px + pw * 0.72, py + ph);
+      ctx.lineTo(px + pw * 0.12, py + ph * 0.85);
+      ctx.closePath();
+      ctx.fill();
+    });
+
+    // Subtle tactical seam & knee fold lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(20, 78, 62, 72);
+    ctx.strokeRect(174, 78, 62, 72);
+    ctx.fillStyle = 'rgba(0,0,0,0.26)';
+    ctx.fillRect(0, 152, 256, 5);
+    ctx.fillRect(0, 232, 256, 4);
+    return finalizeCharTexture(key, canvas);
+  }
+
+  // Denim / Khaki / Navy / White trousers
   const col =
-    styleName === 'black_cargo'
-      ? '#172033'
-      : styleName === 'blue_jeans'
+    styleName === 'blue_jeans'
       ? '#1d4ed8'
       : styleName === 'khaki_pants'
       ? '#a16207'
@@ -408,7 +494,7 @@ export function getBottomTexture(styleName: string, baseHex = '#1e293b'): THREE.
   ctx.fillStyle = 'rgba(255,255,255,0.06)';
   for (let y = 0; y < 256; y += 6) ctx.fillRect(0, y, 256, 2);
 
-  if (styleName === 'black_cargo' || styleName === 'blue_jeans') {
+  if (styleName === 'blue_jeans') {
     ctx.strokeStyle = '#64748b';
     ctx.lineWidth = 3;
     ctx.strokeRect(20, 80, 62, 68);

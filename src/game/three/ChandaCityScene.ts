@@ -25,15 +25,19 @@ import {
   createRickshawModel,
   createCNGModel,
   createMurirTinBusModel,
+  createLegunaModel,
+  createPickupTruckModel,
   createDeliveryVanModel,
   createPoliceCarModel,
   createCarModel,
+  UrbanBuildingOptions,
   createDestructiblePropMesh,
   applyDestructibleVisualState,
   createCityTrees,
   createStreetLampposts,
   createFlyoverPillars,
   createDhakaMetroViaduct,
+  createStreetPoliticalPosters,
 } from './proceduralModels';
 import { WORLD_NPCS_DATA, CITY_ZONES } from '../../data/cityData';
 import { DestructibleObject, HeroExpression, WorldNPCData } from '../../types/game';
@@ -152,8 +156,8 @@ export class ChandaCityScene {
   private onContextLostHandler: ((e: Event) => void) | null = null;
   private camLookTarget = new THREE.Vector3();
   private camTargetPos = new THREE.Vector3();
-  private readonly skyMorning = new THREE.Color(0xfef08a).lerp(new THREE.Color(0x38bdf8), 0.55);
-  private readonly skyAfternoon = new THREE.Color(0x38bdf8);
+  private readonly skyMorning = new THREE.Color(0xfef3c7).lerp(new THREE.Color(0xbae6fd), 0.45);
+  private readonly skyAfternoon = new THREE.Color(0xfdf2d0).lerp(new THREE.Color(0x93c5fd), 0.38);
   private readonly skyEvening = new THREE.Color(0xf59e0b).lerp(new THREE.Color(0x7c2d12), 0.32);
   private readonly skyNight = new THREE.Color(0x0b1120);
 
@@ -204,8 +208,8 @@ export class ChandaCityScene {
 
     // 3. Scene & Camera
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x38bdf8);
-    this.scene.fog = new THREE.FogExp2(0x38bdf8, 0.0046);
+    this.scene.background = new THREE.Color(0xdbeafe).lerp(new THREE.Color(0xfef3c7), 0.55);
+    this.scene.fog = new THREE.FogExp2(0xeae6d2, 0.0036);
 
     this.camera = new THREE.PerspectiveCamera(
       56,
@@ -491,75 +495,240 @@ export class ChandaCityScene {
     this.scene.add(playerHQ.group);
     this.colliders.push(playerHQ.collider);
 
-    // Dense 3-to-5 story Dhaka apartment & office blocks behind the shop rows along Metro & outer avenues
-    const urbanBlocks: [number, number, number, number, number, string, string][] = [
-      [-26, 32, 9, 9, 4, '#1e3a8a', '#fef3c7'],
-      [-26, 58, 10, 10, 4, '#9a3412', '#fde68a'],
-      [26, -32, 9, 9, 4, '#0369a1', '#e0f2fe'],
-      [26, 32, 9, 9, 4, '#be123c', '#ffe4e6'],
-      [-26, -58, 10, 10, 5, '#334155', '#cbd5e1'],
-      [26, -58, 10, 10, 4, '#7c2d12', '#fed7aa'],
-      [28, 21, 8, 8, 3, '#0f766e', '#ccfbf1'],
-      [-28, 21, 8, 8, 3, '#4338ca', '#e0e7ff'],
-      [28, -21, 8, 8, 4, '#a16207', '#fef08a'],
-      [-28, -21, 8, 8, 3, '#86198f', '#fae8ff'],
-      [64, 34, 12, 10, 4, '#0e7490', '#cffafe'],
-      [68, 76, 12, 12, 5, '#1e3a8a', '#f472b6'],
-      [-64, -36, 10, 10, 3, '#475569', '#f59e0b'],
-      [64, -34, 10, 10, 3, '#065f46', '#a7f3d0'],
-      // Expanded Outer Districts & Skyline Blocks
-      [-35, -88, 14, 12, 5, '#334155', '#94a3b8'],
-      [35, -88, 14, 12, 5, '#1e293b', '#f59e0b'],
-      [32, -122, 12, 12, 5, '#0f766e', '#5eead4'],
-      [32, 122, 12, 12, 5, '#1e3a8a', '#fde047'],
-      [-32, 122, 12, 12, 4, '#881337', '#fda4af'],
-      [78, -28, 12, 14, 4, '#365314', '#bef264'],
-      [78, 34, 12, 14, 4, '#4c1d95', '#ddd6fe'],
-      [-78, -32, 12, 14, 4, '#1e293b', '#38bdf8'],
-      [-78, 32, 12, 14, 5, '#7c2d12', '#fdba74'],
-      [132, -32, 14, 18, 5, '#312e81', '#a5b4fc'],
-      [132, 32, 14, 18, 5, '#7c2d12', '#fdba74'],
-      [132, -82, 14, 16, 4, '#064e3b', '#6ee7b7'],
-      [132, 82, 14, 16, 5, '#701a75', '#f0abfc'],
-      [-80, -82, 14, 14, 5, '#1e293b', '#93c5fd'],
-      [80, 126, 16, 14, 5, '#0f172a', '#eab308'],
-      [-76, 126, 16, 14, 4, '#334155', '#fcd34d'],
+    // Dense tall 4-to-7 story Dhaka apartment, commercial & signboard towers along Metro & outer avenues
+    const urbanBlocks: [
+      number,
+      number,
+      number,
+      number,
+      number,
+      string,
+      string,
+      UrbanBuildingOptions?,
+    ][] = [
+      // Avenue-facing tall commercial buildings in clear gaps with Bengali signboards & green louvres
+      [
+        -18.5,
+        -75,
+        10,
+        10,
+        6,
+        '#e5d5be',
+        '#fef3c7',
+        {
+          facing: 'east',
+          shopSign: { title: 'আদর্শ লাইব্রেরি', sub: 'স্থাপিত ১৯৮৮ ইং • বই ও স্টেশনারি', bg: '#111827' },
+          greenLouvres: true,
+        },
+      ],
+      [
+        -18.5,
+        75,
+        10,
+        10,
+        6,
+        '#c97b63',
+        '#fde68a',
+        {
+          facing: 'east',
+          shopSign: { title: 'নিউ ঢাকা স্টোর', sub: 'জেনারেল ও কসমেটিকস', bg: '#0f766e' },
+          midSign: { title: 'মা ফার্মেসি', sub: '২৪ ঘণ্টা খোলা • ঔষধ ও চিকিৎসা', bg: '#ea580c' },
+        },
+      ],
+      [
+        -18.5,
+        148,
+        10,
+        10,
+        5,
+        '#d6c3a5',
+        '#fef08a',
+        {
+          facing: 'east',
+          shopSign: { title: 'ঢাকা টেক্সটাইল হাউজ', sub: 'পাইকারি ও খুচরা কাপড়', bg: '#1e3a8a' },
+        },
+      ],
+      [
+        18.5,
+        -75,
+        10,
+        10,
+        6,
+        '#d4a373',
+        '#fef3c7',
+        {
+          facing: 'west',
+          shopSign: { title: 'বাবার দোয়া হার্ডওয়্যার', sub: 'রং, সিমেন্ট ও স্যানিটারি', bg: '#14532d' },
+          midSign: { title: 'নূর কম্পিউটার', sub: 'ল্যাপটপ ও প্রিন্টিং', bg: '#1d4ed8' },
+        },
+      ],
+      [
+        18.5,
+        88,
+        10,
+        11,
+        6,
+        '#b86b52',
+        '#fde68a',
+        {
+          facing: 'west',
+          shopSign: { title: 'রহমান বস্ত্রালয়', sub: 'ঈদ ও উৎসব কালেকশন', bg: '#7f1d1d' },
+          midSign: { title: 'আল-মদিনা ফার্নিচার', sub: 'স্থাপিত ১৯৯৮ ইং', bg: '#b91c1c' },
+          greenLouvres: true,
+        },
+      ],
+      [
+        18.5,
+        148,
+        10,
+        10,
+        5,
+        '#e5d3b3',
+        '#fef9c3',
+        {
+          facing: 'west',
+          shopSign: { title: 'মিরপুর সুপার স্টোর', sub: 'নিত্যপ্রয়োজনীয় পণ্য', bg: '#0f766e' },
+        },
+      ],
+      [
+        18.5,
+        -176,
+        10,
+        10,
+        6,
+        '#d6c3a5',
+        '#e0f2fe',
+        {
+          facing: 'west',
+          midSign: { title: 'বসুন্ধরা ডেন্টাল কেয়ার', sub: 'দাঁতের আধুনিক চিকিৎসা', bg: '#0369a1' },
+        },
+      ],
+
+      // Tall 5-to-7 story Dhaka apartment & commercial towers backing the 2-story street shops
+      [-26, 32, 10, 10, 6, '#d6c3a5', '#fef3c7', { facing: 'east', greenLouvres: true }],
+      [
+        -26,
+        58,
+        10,
+        10,
+        6,
+        '#c2785c',
+        '#fde68a',
+        { facing: 'east', midSign: { title: 'মা ডায়াগনস্টিক', sub: 'ডিজিটাল এক্স-রে ও প্যাথলজি', bg: '#ea580c' } },
+      ],
+      [
+        26,
+        -32,
+        10,
+        10,
+        6,
+        '#cbd5e1',
+        '#e0f2fe',
+        { facing: 'west', midSign: { title: 'গ্রামীণ টেলিকম', sub: 'মোবাইল ও রিচার্জ পয়েন্ট', bg: '#0369a1' } },
+      ],
+      [
+        26,
+        32,
+        10,
+        10,
+        6,
+        '#be6e5a',
+        '#ffe4e6',
+        { facing: 'west', midSign: { title: 'রয়েল কোচিং সেন্টার', sub: 'ভর্তি ও একাডেমিক কেয়ার', bg: '#9f1239' } },
+      ],
+      [-26, -58, 10, 10, 7, '#b8a99a', '#fef3c7', { facing: 'east', greenLouvres: true }],
+      [26, -58, 10, 10, 6, '#9a6b52', '#fed7aa', { facing: 'west' }],
+      [28, 21, 9, 9, 5, '#0f766e', '#ccfbf1', { facing: 'west', greenLouvres: true }],
+      [-28, 21, 9, 9, 5, '#4338ca', '#e0e7ff', { facing: 'east' }],
+      [28, -21, 9, 9, 6, '#d4a373', '#fef08a', { facing: 'west' }],
+      [-28, -21, 9, 9, 5, '#865d4f', '#fae8ff', { facing: 'east' }],
+      [64, 34, 12, 10, 6, '#0e7490', '#cffafe'],
+      [68, 76, 12, 12, 7, '#1e3a8a', '#f472b6'],
+      [-64, -36, 10, 10, 5, '#475569', '#f59e0b'],
+      [64, -34, 10, 10, 5, '#065f46', '#a7f3d0'],
+      // Expanded Outer Districts & Tall Skyline Blocks
+      [-35, -88, 14, 12, 7, '#c7b8a1', '#fef3c7'],
+      [35, -88, 14, 12, 7, '#1e293b', '#f59e0b'],
+      [32, -122, 12, 12, 6, '#0f766e', '#5eead4'],
+      [32, 122, 12, 12, 6, '#1e3a8a', '#fde047'],
+      [-32, 122, 12, 12, 6, '#881337', '#fda4af'],
+      [78, -28, 12, 14, 5, '#365314', '#bef264'],
+      [78, 34, 12, 14, 5, '#4c1d95', '#ddd6fe'],
+      [-78, -32, 12, 14, 5, '#1e293b', '#38bdf8'],
+      [-78, 32, 12, 14, 6, '#7c2d12', '#fdba74'],
+      [132, -32, 14, 18, 6, '#312e81', '#a5b4fc'],
+      [132, 32, 14, 18, 6, '#7c2d12', '#fdba74'],
+      [132, -82, 14, 16, 5, '#064e3b', '#6ee7b7'],
+      [132, 82, 14, 16, 6, '#701a75', '#f0abfc'],
+      [-80, -82, 14, 14, 6, '#1e293b', '#93c5fd'],
+      [80, 126, 16, 14, 6, '#0f172a', '#eab308'],
+      [-76, 126, 16, 14, 5, '#334155', '#fcd34d'],
       // Outer Ring Skyline Blocks (±165..±225 districts)
-      [-34, -188, 16, 14, 5, '#1e293b', '#f59e0b'],
-      [34, -188, 16, 14, 5, '#0f766e', '#5eead4'],
-      [-34, 188, 16, 14, 5, '#312e81', '#a5b4fc'],
-      [34, 188, 16, 14, 5, '#7c2d12', '#fdba74'],
-      [-192, -36, 16, 18, 5, '#334155', '#38bdf8'],
-      [-192, 36, 16, 18, 4, '#4c1d95', '#ddd6fe'],
-      [192, -36, 16, 18, 5, '#065f46', '#a7f3d0'],
-      [192, 36, 16, 18, 5, '#881337', '#fda4af'],
-      [-192, -138, 14, 16, 5, '#1e3a8a', '#fef08a'],
-      [192, -138, 14, 16, 5, '#701a75', '#f0abfc'],
-      [-192, 138, 14, 16, 4, '#365314', '#bef264'],
-      [192, 138, 14, 16, 5, '#0f172a', '#fb923c'],
-      [-80, -196, 18, 14, 5, '#334155', '#cbd5e1'],
-      [80, -196, 18, 14, 5, '#1e293b', '#f59e0b'],
-      [-80, 196, 18, 14, 4, '#0369a1', '#e0f2fe'],
-      [80, 196, 18, 14, 5, '#be123c', '#ffe4e6'],
+      [-34, -188, 16, 14, 6, '#1e293b', '#f59e0b'],
+      [34, -188, 16, 14, 6, '#0f766e', '#5eead4'],
+      [-34, 188, 16, 14, 6, '#312e81', '#a5b4fc'],
+      [34, 188, 16, 14, 6, '#7c2d12', '#fdba74'],
+      [-192, -36, 16, 18, 6, '#334155', '#38bdf8'],
+      [-192, 36, 16, 18, 5, '#4c1d95', '#ddd6fe'],
+      [192, -36, 16, 18, 6, '#065f46', '#a7f3d0'],
+      [192, 36, 16, 18, 6, '#881337', '#fda4af'],
+      [-192, -138, 14, 16, 6, '#1e3a8a', '#fef08a'],
+      [192, -138, 14, 16, 6, '#701a75', '#f0abfc'],
+      [-192, 138, 14, 16, 5, '#365314', '#bef264'],
+      [192, 138, 14, 16, 6, '#0f172a', '#fb923c'],
+      [-80, -196, 18, 14, 6, '#334155', '#cbd5e1'],
+      [80, -196, 18, 14, 6, '#1e293b', '#f59e0b'],
+      [-80, 196, 18, 14, 5, '#0369a1', '#e0f2fe'],
+      [80, 196, 18, 14, 6, '#be123c', '#ffe4e6'],
     ];
-    urbanBlocks.forEach(([bx, bz, bw, bd, floors, wall, trim]) => {
-      const b = createUrbanBuilding(bx, bz, bw, bd, floors, wall, trim);
+    urbanBlocks.forEach(([bx, bz, bw, bd, floors, wall, trim, opts]) => {
+      const b = createUrbanBuilding(bx, bz, bw, bd, floors, wall, trim, opts);
       this.scene.add(b.group);
       this.colliders.push(b.collider);
     });
 
-    // Roadside vendor umbrella stalls along brick sidewalk (between shops)
-    [
-      [-11.4, 20, 0xef4444],
-      [11.4, 20, 0x2563eb],
-      [-11.4, -20, 0x16a34a],
-      [11.4, -20, 0xf59e0b],
-      [24, 9.2, 0x9333ea],
-      [-32, -9.2, 0xea580c],
-      [-11.4, -104, 0x10b981],
-      [11.4, 104, 0xf59e0b],
-    ].forEach(([ux, uz, col]) => {
-      this.scene.add(createRoadsideUmbrellaStall(ux, uz, col));
+    // Dense colorful Bangladeshi footpath umbrella stalls (টং ও হকার স্টল) along both brick footpaths
+    const stallPlacements: [number, number, number, number][] = [
+      // Main NS West brick footpath (x = -10.65, facing East towards boulevard)
+      [-10.65, -188, 0xfacc15, Math.PI / 2],
+      [-10.65, -154, 0x0284c7, Math.PI / 2],
+      [-10.65, -124, 0xef4444, Math.PI / 2],
+      [-10.65, -76, 0x16a34a, Math.PI / 2],
+      [-10.65, -62, 0xf97316, Math.PI / 2],
+      [-10.65, -34, 0x16a34a, Math.PI / 2],
+      [-10.65, -20, 0x2563eb, Math.PI / 2],
+      [-10.65, 20, 0xfacc15, Math.PI / 2],
+      [-10.65, 32, 0x0284c7, Math.PI / 2],
+      [-10.65, 62, 0xef4444, Math.PI / 2],
+      [-10.65, 74, 0x10b981, Math.PI / 2],
+      [-10.65, 124, 0xf59e0b, Math.PI / 2],
+      [-10.65, 152, 0x9333ea, Math.PI / 2],
+      [-10.65, 184, 0xea580c, Math.PI / 2],
+      // Main NS East brick footpath (x = 10.65, facing West towards boulevard)
+      [10.65, -188, 0xef4444, -Math.PI / 2],
+      [10.65, -154, 0xf59e0b, -Math.PI / 2],
+      [10.65, -124, 0x0284c7, -Math.PI / 2],
+      [10.65, -76, 0x9333ea, -Math.PI / 2],
+      [10.65, -62, 0x16a34a, -Math.PI / 2],
+      [10.65, -34, 0xef4444, -Math.PI / 2],
+      [10.65, -20, 0xfacc15, -Math.PI / 2],
+      [10.65, 20, 0x2563eb, -Math.PI / 2],
+      [10.65, 32, 0x16a34a, -Math.PI / 2],
+      [10.65, 62, 0xf59e0b, -Math.PI / 2],
+      [10.65, 74, 0xea580c, -Math.PI / 2],
+      [10.65, 124, 0x10b981, -Math.PI / 2],
+      [10.65, 152, 0x0284c7, -Math.PI / 2],
+      [10.65, 184, 0xfacc15, -Math.PI / 2],
+      // EW Avenue brick footpaths (z = ±8.6)
+      [-24, 8.6, 0xef4444, Math.PI],
+      [-64, 8.6, 0x16a34a, Math.PI],
+      [-32, -8.6, 0xea580c, 0],
+      [24, 8.6, 0x9333ea, Math.PI],
+      [36, -8.6, 0x0284c7, 0],
+      [64, -8.6, 0xfacc15, 0],
+    ];
+    stallPlacements.forEach(([ux, uz, col, rot]) => {
+      this.scene.add(createRoadsideUmbrellaStall(ux, uz, col, rot));
     });
 
     // Overhead power lines & poles
@@ -595,6 +764,7 @@ export class ChandaCityScene {
     this.scene.add(createCityTrees());
     this.scene.add(createStreetLampposts());
     this.scene.add(createFlyoverPillars());
+    this.scene.add(createStreetPoliticalPosters());
 
     // 10. Player Character Rig
     this.rebuildPlayerMesh();
@@ -744,17 +914,21 @@ export class ChandaCityScene {
       [0x06b6d4, 0x1e293b],
       [0xf8fafc, 0x15803d],
       [0xef4444, 0x0f172a],
+      [0x6366f1, 0x18181b],
+      [0xf97316, 0x334155],
     ];
 
-    // Walkers along widened brick NS sidewalks (x = ±10.8) — include female citizens
-    for (let i = 0; i < 16; i++) {
+    // Busy Dhaka crowds walking along both NS brick footpaths (x = ±11.9 inner lane & ±11.4 outer lane)
+    for (let i = 0; i < 40; i++) {
       const isFemale = i % 3 === 1;
       const [shirt, bottom] = outfitCombos[i % outfitCombos.length];
       const rig = isFemale
         ? createNPCCharacter('female_citizen', { variantSeed: i })
         : createArticulatedCharacter({ shirtColor: shirt, bottomColor: bottom });
-      const fixedX = i % 2 === 0 ? -10.8 : 10.8;
-      const startZ = -192 + i * 24;
+      const side = i % 2 === 0 ? -1 : 1;
+      const laneOffset = i % 4 < 2 ? 11.85 : 11.45;
+      const fixedX = side * laneOffset;
+      const startZ = -196 + i * 10.1;
       rig.root.position.set(fixedX, 0.18, startZ);
       this.scene.add(rig.root);
       this.pedestrians.push({
@@ -762,24 +936,24 @@ export class ChandaCityScene {
         isFemale,
         axis: 'z',
         fixedCoord: fixedX,
-        minRange: -205,
-        maxRange: 205,
+        minRange: -206,
+        maxRange: 206,
         direction: i % 2 === 0 ? 1 : -1,
-        speed: 1.55 + (i % 3) * 0.3,
-        phase: i * 1.1,
-        chatPauseTimer: 0,
+        speed: 1.35 + (i % 4) * 0.25,
+        phase: i * 0.85,
+        chatPauseTimer: i % 7 === 0 ? 1.8 : 0,
       });
     }
 
-    // Walkers along EW sidewalks (z = ±8.5)
-    for (let i = 0; i < 10; i++) {
+    // Walkers along EW brick sidewalks (z = ±8.8)
+    for (let i = 0; i < 16; i++) {
       const isFemale = i % 2 === 0;
       const [shirt, bottom] = outfitCombos[(i + 2) % outfitCombos.length];
       const rig = isFemale
         ? createNPCCharacter('female_citizen', { variantSeed: i + 5 })
         : createArticulatedCharacter({ shirtColor: shirt, bottomColor: bottom });
-      const fixedZ = i % 2 === 0 ? -8.5 : 8.5;
-      const startX = -175 + i * 36;
+      const fixedZ = i % 2 === 0 ? -8.8 : 8.8;
+      const startX = -180 + i * 24;
       rig.root.position.set(startX, 0.16, fixedZ);
       this.scene.add(rig.root);
       this.pedestrians.push({
@@ -790,7 +964,7 @@ export class ChandaCityScene {
         minRange: -195,
         maxRange: 195,
         direction: i % 2 === 0 ? 1 : -1,
-        speed: 1.45 + (i % 3) * 0.25,
+        speed: 1.4 + (i % 3) * 0.25,
         phase: i * 0.9,
         chatPauseTimer: 0,
       });
@@ -798,7 +972,7 @@ export class ChandaCityScene {
   }
 
   private setupTraffic() {
-    // Lane traffic along divided Metro Avenue (x = ±5.6) & EW (z = ±4.6) + Ring Roads (±50, ±105, ±165)
+    // Rich Bangladeshi street traffic: Buses, Legunas, Pickup Trucks, CNGs, Rickshaws, Delivery Vans & Sedans
     const addTraffic = (
       mesh: THREE.Group,
       axis: 'x' | 'z',
@@ -820,18 +994,115 @@ export class ChandaCityScene {
       this.trafficVehicles.push({ mesh, axis, laneCoord, minRange, maxRange, direction, speed });
     };
 
-    // Southbound left carriageway & Northbound right carriageway
-    addTraffic(createRickshawModel(), 'z', -7.2, 24, 1, 4.4, 20, 205);
-    addTraffic(createCarModel(0xf8fafc), 'z', -4.0, -30, 1, 8.2, -205, -14);
-    addTraffic(createCarModel(0xe2e8f0), 'z', 4.2, -55, -1, 8.5, -205, -14);
-    addTraffic(createCNGModel(), 'z', 6.8, 65, -1, 7.2, 16, 205);
+    // --- Main Divided NS Metro Boulevard (Southbound x = -3.8 / -7.0, Northbound x = 3.8 / 7.0) ---
+    // South half (z in [16, 208]) — right in front of spawn & visible down the boulevard!
+    addTraffic(
+      createMurirTinBusModel(undefined, 0xdc2626, 'মিরপুর ১০ ➔ গুলিস্তান', 'বিআরটিসি লাল বাস'),
+      'z',
+      -3.8,
+      36,
+      1,
+      6.4,
+      16,
+      208
+    );
+    addTraffic(
+      createMurirTinBusModel(undefined, 0x059669, 'উত্তরা ➔ মতিঝিল', 'গ্রিন ঢাকা এক্সপ্রেস'),
+      'z',
+      3.8,
+      68,
+      -1,
+      6.6,
+      16,
+      208
+    );
+    addTraffic(
+      createMurirTinBusModel(undefined, 0x2563eb, 'মিরপুর ১২ ➔ ফার্মগেট', 'রোডমাস্টার সুপার'),
+      'z',
+      3.8,
+      148,
+      -1,
+      6.2,
+      16,
+      208
+    );
+    addTraffic(createLegunaModel(0x16a34a), 'z', -6.8, 78, 1, 7.6, 16, 208);
+    addTraffic(createLegunaModel(0x0284c7), 'z', 6.8, 118, -1, 7.8, 16, 208);
+    addTraffic(createPickupTruckModel(0x0284c7), 'z', -3.8, 114, 1, 7.4, 16, 208);
+    addTraffic(createDeliveryVanModel(), 'z', 3.8, 28, -1, 7.2, 16, 208);
+    addTraffic(createRickshawModel(), 'z', -7.2, 24, 1, 4.3, 16, 208);
+    addTraffic(createRickshawModel(), 'z', 7.2, 48, -1, 4.4, 16, 208);
+    addTraffic(createCNGModel(), 'z', 6.8, 86, -1, 7.0, 16, 208);
+    addTraffic(createCarModel(0xf8fafc), 'z', -3.8, 174, 1, 8.6, 16, 208);
+
+    // North half of Main NS Metro Boulevard (z in [-208, -16])
+    addTraffic(
+      createMurirTinBusModel(undefined, 0x16a34a, 'ফার্মগেট ➔ মিরপুর ১০', 'প্রভাতী বনশ্রী সার্ভিস'),
+      'z',
+      -3.8,
+      -44,
+      1,
+      6.4,
+      -208,
+      -16
+    );
+    addTraffic(
+      createMurirTinBusModel(undefined, 0xdc2626, 'আগারগাঁও ➔ উত্তরা', 'সিটি সার্কুলার বাস'),
+      'z',
+      3.8,
+      -74,
+      -1,
+      6.6,
+      -208,
+      -16
+    );
+    addTraffic(
+      createMurirTinBusModel(undefined, 0xea580c, 'সদরঘাট ➔ গাবতলী', 'লাব্বাইক এক্সপ্রেস'),
+      'z',
+      -3.8,
+      -146,
+      1,
+      6.2,
+      -208,
+      -16
+    );
+    addTraffic(createCarModel(0xf8fafc), 'z', -3.8, -96, 1, 8.4, -208, -16);
+    addTraffic(createCarModel(0xe2e8f0), 'z', 3.8, -124, -1, 8.5, -208, -16);
+    addTraffic(createPickupTruckModel(0xb91c1c), 'z', 3.8, -32, -1, 7.5, -208, -16);
+    addTraffic(createLegunaModel(0xd97706), 'z', -6.8, -62, 1, 7.5, -208, -16);
+    addTraffic(createCNGModel(), 'z', 6.8, -48, -1, 7.2, -208, -16);
+    addTraffic(createRickshawModel(), 'z', -7.2, -26, 1, 4.4, -208, -16);
+    addTraffic(createRickshawModel(), 'z', 7.2, -104, -1, 4.3, -208, -16);
+
+    // --- Main EW Avenue & Ring Roads ---
+    addTraffic(
+      createMurirTinBusModel(undefined, 0x0284c7, 'মহাখালী ➔ গুলশান', 'ঢাকা চাকা এসি'),
+      'x',
+      -4.2,
+      -82,
+      1,
+      6.4,
+      -198,
+      -16
+    );
+    addTraffic(
+      createMurirTinBusModel(undefined, 0xdc2626, 'যাত্রাবাড়ী ➔ মিরপুর', 'বিআরটিসি ডাবল সার্ভিস'),
+      'x',
+      4.2,
+      88,
+      -1,
+      6.4,
+      16,
+      198
+    );
+    addTraffic(createRickshawModel(), 'x', 5.4, 55, -1, 4.2, 16, 198);
+    addTraffic(createDeliveryVanModel(), 'x', -4.8, -45, 1, 6.6, -198, -16);
+    addTraffic(createPickupTruckModel(0x15803d), 'x', 4.6, 36, -1, 7.2, 16, 198);
     addTraffic(createMurirTinBusModel(), 'z', -50 + 2.5, -45, 1, 6.0, -170, 170);
     addTraffic(createCarModel(0xf8fafc), 'z', 50 - 2.5, 45, -1, 7.8, -170, 170);
-    addTraffic(createRickshawModel(), 'x', 5.0, 55, -1, 4.2, 16, 198);
-    addTraffic(createDeliveryVanModel(), 'x', -5.0, -55, 1, 6.5, -198, -16);
     addTraffic(createCNGModel(), 'z', 105 - 2.4, -70, 1, 7.0, -185, 185);
     addTraffic(createCarModel(0xfef08a), 'x', -105 + 2.4, 30, -1, 7.5, -185, 185);
-    addTraffic(createMurirTinBusModel(), 'z', 165 - 2.4, -90, 1, 6.4, -205, 205);
+    addTraffic(createMurirTinBusModel(undefined, 0x059669, 'বনানী ➔ উত্তরা', 'এয়ারপোর্ট শাটল'), 'z', 165 - 2.4, -90, 1, 6.4, -205, 205);
     addTraffic(createCarModel(0x38bdf8), 'z', -165 + 2.4, 90, -1, 8.0, -205, 205);
     addTraffic(createDeliveryVanModel(), 'x', -165 + 2.4, -60, 1, 6.8, -205, 205);
     addTraffic(createCNGModel(), 'x', 165 - 2.4, 60, -1, 7.2, -205, 205);
@@ -995,8 +1266,20 @@ export class ChandaCityScene {
       }
     };
 
+    const onWindowBlur = () => {
+      this.clearMovementKeys();
+    };
+
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        this.clearMovementKeys();
+      }
+    };
+
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onWindowBlur);
+    document.addEventListener('visibilitychange', onVisibilityChange);
     this.renderer.domElement.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
@@ -1009,6 +1292,8 @@ export class ChandaCityScene {
     this.cleanupListeners = () => {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onWindowBlur);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       this.renderer.domElement.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
@@ -1018,6 +1303,16 @@ export class ChandaCityScene {
       this.renderer.domElement.removeEventListener('touchend', onCanvasTouchEnd);
       this.renderer.domElement.removeEventListener('touchcancel', onCanvasTouchEnd);
     };
+  }
+
+  private clearMovementKeys() {
+    this.moveForward = false;
+    this.moveBackward = false;
+    this.moveLeft = false;
+    this.moveRight = false;
+    this.isSprinting = false;
+    this.touchMoveX = 0;
+    this.touchMoveY = 0;
   }
 
   public setTouchMovement(dx: number, dy: number, sprint = false) {
@@ -1343,12 +1638,23 @@ export class ChandaCityScene {
 
     // Freeze & animate appropriately while caught by police or modal open or paused
     if (store.policeState.status === 'caught') {
+      this.clearMovementKeys();
       this.playerVelocity.set(0, 0, 0);
+      if (this.playerRig.root.position.y > 0) {
+        this.playerRig.root.position.y = 0;
+        this.isGrounded = true;
+      }
       this.animateRig(this.playerRig, 0, false, 0, t, 'reaction_shocked');
       return;
     }
 
     if (store.gameMode !== 'playing' || store.activeModal !== null) {
+      this.clearMovementKeys();
+      this.playerVelocity.set(0, 0, 0);
+      if (this.playerRig.root.position.y > 0) {
+        this.playerRig.root.position.y = 0;
+        this.isGrounded = true;
+      }
       const modalAction: CharacterAnimAction | undefined =
         store.activeModal === 'police_encounter' ? 'reaction_shocked' : undefined;
       this.animateRig(this.playerRig, 0, false, 0, t, modalAction);
@@ -1381,22 +1687,27 @@ export class ChandaCityScene {
     const isMoving = moveDir.lengthSq() > 0.01;
     if (isMoving) {
       moveDir.normalize();
-      const speedMult = this.isSprinting ? 1.58 : 1.0;
+      const speedMult = this.isSprinting ? 1.62 : 1.0;
       const currentSpeed = this.playerSpeed * speedMult;
-      this.playerVelocity.x = moveDir.x * currentSpeed;
-      this.playerVelocity.z = moveDir.z * currentSpeed;
+      this.playerVelocity.x = THREE.MathUtils.damp(this.playerVelocity.x, moveDir.x * currentSpeed, 15, delta);
+      this.playerVelocity.z = THREE.MathUtils.damp(this.playerVelocity.z, moveDir.z * currentSpeed, 15, delta);
 
       const targetRotation = Math.atan2(moveDir.x, moveDir.z);
       // Shortest angular interpolation
       let diff = targetRotation - this.playerRig.root.rotation.y;
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;
-      this.playerRig.root.rotation.y += diff * Math.min(1, delta * 12);
-
-      this.animWalkCycle += delta * (this.isSprinting ? 14 : 9.5);
+      this.playerRig.root.rotation.y += diff * Math.min(1, delta * 11);
     } else {
       this.playerVelocity.x = THREE.MathUtils.damp(this.playerVelocity.x, 0, 12, delta);
       this.playerVelocity.z = THREE.MathUtils.damp(this.playerVelocity.z, 0, 12, delta);
+    }
+
+    const horizSpeed = Math.hypot(this.playerVelocity.x, this.playerVelocity.z);
+    const speedRatio = horizSpeed / this.playerSpeed;
+    if (speedRatio > 0.08) {
+      const cycleRate = speedRatio > 1.12 ? 7.2 * speedRatio : 6.9 * Math.max(0.75, speedRatio);
+      this.animWalkCycle += delta * cycleRate;
     }
 
     // Gravity & Floor
@@ -1434,9 +1745,14 @@ export class ChandaCityScene {
     const shadowScale = Math.max(0.4, 1 - this.playerRig.root.position.y * 0.25);
     this.playerRig.shadowBlob.scale.set(shadowScale, shadowScale, 1);
 
-    // Limb animation
-    const speedRatio = Math.hypot(this.playerVelocity.x, this.playerVelocity.z) / this.playerSpeed;
-    this.animateRig(this.playerRig, speedRatio, !this.isGrounded, this.kickAnimTimer, isMoving ? this.animWalkCycle : t);
+    // Limb animation (GTA 6 walk/run/idle)
+    this.animateRig(
+      this.playerRig,
+      speedRatio,
+      !this.isGrounded,
+      this.kickAnimTimer,
+      speedRatio > 0.08 ? this.animWalkCycle : t
+    );
 
     // Sync store periodically
     const now = performance.now();
@@ -1949,15 +2265,29 @@ export class ChandaCityScene {
       (this.rainParticles.material as THREE.Material).dispose();
     }
 
-    // Traverse and dispose geometries & materials
+    // Traverse and dispose geometries, materials, and CanvasTextures
+    const disposedTextures = new Set<THREE.Texture>();
+    const disposeMaterial = (mat: THREE.Material) => {
+      const stdMat = mat as THREE.MeshStandardMaterial;
+      if (stdMat.map && !disposedTextures.has(stdMat.map)) {
+        disposedTextures.add(stdMat.map);
+        stdMat.map.dispose();
+      }
+      if (stdMat.emissiveMap && !disposedTextures.has(stdMat.emissiveMap)) {
+        disposedTextures.add(stdMat.emissiveMap);
+        stdMat.emissiveMap.dispose();
+      }
+      mat.dispose();
+    };
+
     this.scene.traverse((obj) => {
       if ((obj as THREE.Mesh).isMesh) {
         const mesh = obj as THREE.Mesh;
         mesh.geometry?.dispose();
         if (Array.isArray(mesh.material)) {
-          mesh.material.forEach((m) => m.dispose());
-        } else {
-          mesh.material?.dispose();
+          mesh.material.forEach(disposeMaterial);
+        } else if (mesh.material) {
+          disposeMaterial(mesh.material);
         }
       }
     });

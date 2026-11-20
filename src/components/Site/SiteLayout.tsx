@@ -28,11 +28,11 @@ export const SiteLayout: React.FC<SiteLayoutProps> = ({ onPlayNow, children }) =
             className="flex items-center gap-2.5 text-lg sm:text-xl font-bold tracking-tight text-amber-400 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-amber-400 rounded-md"
           >
             <img
-              src="/images/chanda-de-logo.webp"
+              src="/assets/aistudio/chanda-de-logo_2705d40a.png"
               alt="CHANDA DE game emblem"
-              width={28}
-              height={28}
-              className="w-7 h-7 rounded-md object-cover shrink-0"
+              width={32}
+              height={32}
+              className="w-8 h-8 rounded-full object-cover shrink-0 border border-amber-400/50"
             />
             <span>CHANDA DE</span>
           </SeoLink>
@@ -113,12 +113,12 @@ export const SiteLayout: React.FC<SiteLayoutProps> = ({ onPlayNow, children }) =
             <div className="md:col-span-5 space-y-3">
               <div className="flex items-center gap-2.5">
                 <img
-                  src="/images/chanda-de-logo.webp"
+                  src="/assets/aistudio/chanda-de-logo_2705d40a.png"
                   alt="CHANDA DE logo"
-                  width={32}
-                  height={32}
+                  width={36}
+                  height={36}
                   loading="lazy"
-                  className="w-8 h-8 rounded-md object-cover"
+                  className="w-9 h-9 rounded-full object-cover border border-amber-400/50"
                 />
                 <span className="text-lg font-bold text-amber-400">
                   CHANDA DE (চান্দা দে)

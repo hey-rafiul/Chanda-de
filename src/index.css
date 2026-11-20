@@ -44,6 +44,57 @@
   pointer-events: none;
 }
 
+/* Authentic Bangladeshi Dokaan (বazar/Tong Shop) Decorative UI Surfaces */
+.bd-awning-stripe {
+  background-image: repeating-linear-gradient(
+    90deg,
+    #dc2626 0px,
+    #dc2626 14px,
+    #fef3c7 14px,
+    #fef3c7 28px,
+    #15803d 28px,
+    #15803d 42px
+  );
+}
+
+.bd-awning-gold {
+  background-image: repeating-linear-gradient(
+    90deg,
+    #b45309 0px,
+    #b45309 14px,
+    #fef08a 14px,
+    #fef08a 26px,
+    #991b1b 26px,
+    #991b1b 40px
+  );
+}
+
+.bd-signboard {
+  background: linear-gradient(180deg, rgba(11, 24, 19, 0.96) 0%, rgba(8, 15, 22, 0.96) 100%);
+  border: 2px solid rgba(250, 204, 21, 0.65);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 14px 36px rgba(0, 0, 0, 0.72);
+}
+
+.bd-halkhata {
+  background: linear-gradient(180deg, rgba(35, 11, 18, 0.97) 0%, rgba(12, 16, 28, 0.98) 100%);
+  border: 2px solid rgba(245, 158, 11, 0.7);
+  box-shadow:
+    inset 0 0 0 1px rgba(251, 191, 36, 0.16),
+    0 18px 46px rgba(0, 0, 0, 0.8);
+}
+
+.bd-tin-trim {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.09) 0px,
+    rgba(255, 255, 255, 0.09) 6px,
+    rgba(0, 0, 0, 0.22) 6px,
+    rgba(0, 0, 0, 0.22) 12px
+  );
+}
+
 /* Screen shake animation for cartoon destruction impacts */
 @keyframes cartoon-shake {
   0%, 100% { transform: translate3d(0, 0, 0); }

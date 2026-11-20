@@ -93,11 +93,12 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({ onTeleport }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/90">
-      <div className="relative w-full max-w-lg rounded-3xl bg-[#0B101E] border-2 border-emerald-500/60 shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]">
+      <div className="relative w-full max-w-lg rounded-3xl bd-signboard overflow-hidden flex flex-col max-h-[90dvh]">
+        <div className="h-2 w-full bd-awning-stripe shrink-0" />
         {/* Header */}
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-600/25 to-slate-900 border-b border-slate-800">
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-950/75 via-[#0e1b16] to-slate-900 border-b border-amber-500/35">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-xl">
+            <div className="w-10 h-10 rounded-xl bg-amber-400 flex items-center justify-center text-slate-950 font-black text-xl shadow">
               {vehicle.type === 'bus' && '🚌'}
               {vehicle.type === 'rickshaw' && '🚲'}
               {vehicle.type === 'cng' && '🛺'}
@@ -105,13 +106,13 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({ onTeleport }) => {
               {vehicle.type === 'van' && '🚐'}
             </div>
             <div>
-              <h2 className="font-bold text-white text-base sm:text-lg leading-tight">{vehicle.nameBn}</h2>
-              <div className="text-xs text-slate-400">ড্রাইভার: {vehicle.driverName}</div>
+              <h2 className="font-bold text-amber-100 text-base sm:text-lg leading-tight">{vehicle.nameBn}</h2>
+              <div className="text-xs text-amber-200/75">ড্রাইভার: {vehicle.driverName}</div>
             </div>
           </div>
           <button
             onClick={closeModal}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-amber-500/35 text-amber-200 hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

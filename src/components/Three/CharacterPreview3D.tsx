@@ -37,12 +37,15 @@ export const CharacterPreview3D: React.FC<CharacterPreview3DProps> = ({
   className = '',
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
   const rigRef = useRef<StylizedCharacterRig | null>(null);
   const yawRef = useRef(0.32);
   const actionRef = useRef<CharacterAnimAction>(action);
+  const expressionRef = useRef<HeroExpression>(expression);
   const [webglFailed, setWebglFailed] = useState(false);
 
   actionRef.current = action;
+  expressionRef.current = expression;
 
   useEffect(() => {
     const el = containerRef.current;
@@ -67,6 +70,7 @@ export const CharacterPreview3D: React.FC<CharacterPreview3DProps> = ({
     el.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
+    sceneRef.current = scene;
     const pmrem = new THREE.PMREMGenerator(renderer);
     const roomEnv = new RoomEnvironment();
     const envTarget = pmrem.fromScene(roomEnv, 0.04);
@@ -99,18 +103,6 @@ export const CharacterPreview3D: React.FC<CharacterPreview3DProps> = ({
     const disc = new THREE.Mesh(discGeo, discMat);
     disc.position.y = -0.04;
     scene.add(disc);
-
-    // Build character rig
-    const rig =
-      mode === 'hero' && equipped && customizations
-        ? createHeroCharacterFromEquipped(equipped, customizations, false)
-        : createNPCCharacter(archetype, { showMarkerArrow: false });
-    if (mode === 'hero') {
-      setCharacterExpression(rig, expression);
-    }
-    rig.root.rotation.y = yawRef.current;
-    scene.add(rig.root);
-    rigRef.current = rig;
 
     // Drag rotation interaction
     let dragging = false;
@@ -157,9 +149,16 @@ export const CharacterPreview3D: React.FC<CharacterPreview3DProps> = ({
       }
       if (rigRef.current) {
         rigRef.current.root.rotation.y = yawRef.current;
+        const previewPhase =
+          actionRef.current === 'run'
+            ? t * 11.2
+            : actionRef.current === 'walk'
+            ? t * 6.8
+            : t * 1.8;
         animateCharacterRig(rigRef.current, {
           action: actionRef.current,
-          phase: t * 1.8,
+          speedRatio: actionRef.current === 'run' ? 1.55 : actionRef.current === 'walk' ? 0.98 : 0,
+          phase: previewPhase,
         });
       }
       renderer.render(scene, camera);
@@ -175,15 +174,55 @@ export const CharacterPreview3D: React.FC<CharacterPreview3DProps> = ({
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
 
-      disposeCharacterRig(rigRef.current);
-      rigRef.current = null;
+      if (rigRef.current) {
+        scene.remove(rigRef.current.root);
+        disposeCharacterRig(rigRef.current);
+        rigRef.current = null;
+      }
+      sceneRef.current = null;
       envTarget.dispose();
       discGeo.dispose();
       discMat.dispose();
       renderer.dispose();
       if (dom.parentElement) dom.parentElement.removeChild(dom);
     };
-  }, [mode, archetype, equipped, customizations, expression]);
+  }, []);
+
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+
+    if (rigRef.current) {
+      scene.remove(rigRef.current.root);
+      disposeCharacterRig(rigRef.current);
+      rigRef.current = null;
+    }
+
+    const rig =
+      mode === 'hero' && equipped && customizations
+        ? createHeroCharacterFromEquipped(equipped, customizations, false)
+        : createNPCCharacter(archetype, { showMarkerArrow: false });
+    if (mode === 'hero') {
+      setCharacterExpression(rig, expressionRef.current);
+    }
+    rig.root.rotation.y = yawRef.current;
+    scene.add(rig.root);
+    rigRef.current = rig;
+
+    return () => {
+      if (rigRef.current === rig) {
+        scene.remove(rig.root);
+        disposeCharacterRig(rig);
+        rigRef.current = null;
+      }
+    };
+  }, [mode, archetype, equipped, customizations]);
+
+  useEffect(() => {
+    if (mode === 'hero' && rigRef.current) {
+      setCharacterExpression(rigRef.current, expression);
+    }
+  }, [expression, mode]);
 
   if (webglFailed) {
     return (

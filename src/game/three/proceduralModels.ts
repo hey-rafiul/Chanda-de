@@ -9,6 +9,7 @@ import {
   createCurbTexture,
   createMetroPosterTexture,
   createMetroStationSignTexture,
+  createPoliticalPosterTexture,
 } from './materials';
 
 import {
@@ -272,6 +273,13 @@ export function createShopModel(shop: ShopData): {
 // 3. MULTI-STORY URBAN BUILDINGS & LANDMARKS
 // ==========================================
 
+export interface UrbanBuildingOptions {
+  facing?: 'east' | 'west' | 'north' | 'south';
+  shopSign?: { title: string; sub: string; bg: string };
+  midSign?: { title: string; sub: string; bg: string };
+  greenLouvres?: boolean;
+}
+
 export function createUrbanBuilding(
   x: number,
   z: number,
@@ -279,7 +287,8 @@ export function createUrbanBuilding(
   depth: number,
   floors: number,
   wallHex: string,
-  trimHex = '#f8fafc'
+  trimHex = '#f8fafc',
+  options?: UrbanBuildingOptions
 ): { group: THREE.Group; collider: BoxCollider } {
   const group = new THREE.Group();
   const floorHeight = 3.2;
@@ -294,6 +303,89 @@ export function createUrbanBuilding(
   body.castShadow = true;
   body.receiveShadow = true;
   group.add(body);
+
+  // Determine street-facing horizontal offset & rotation
+  const facing = options?.facing ?? (x < 0 ? 'east' : 'west');
+  const faceDirX = facing === 'east' ? 1 : facing === 'west' ? -1 : 0;
+  const faceDirZ = facing === 'south' ? 1 : facing === 'north' ? -1 : 0;
+  const faceRotY =
+    facing === 'east'
+      ? Math.PI / 2
+      : facing === 'west'
+      ? -Math.PI / 2
+      : facing === 'north'
+      ? Math.PI
+      : 0;
+
+  if (options?.shopSign) {
+    const signTex = createBengaliSignTexture(
+      options.shopSign.title,
+      options.shopSign.sub,
+      options.shopSign.bg,
+      '#fef08a',
+      '#facc15'
+    );
+    const signBoard = new THREE.Mesh(
+      boxGeo,
+      new THREE.MeshStandardMaterial({
+        map: signTex,
+        emissive: new THREE.Color(0xffffff),
+        emissiveMap: signTex,
+        emissiveIntensity: 0.25,
+        roughness: 0.35,
+      })
+    );
+    const span = facing === 'east' || facing === 'west' ? depth * 0.84 : width * 0.84;
+    signBoard.scale.set(span, 1.35, 0.14);
+    signBoard.position.set(
+      faceDirX * (width / 2 + 0.1),
+      3.55,
+      faceDirZ * (depth / 2 + 0.1)
+    );
+    signBoard.rotation.y = faceRotY;
+    group.add(signBoard);
+  }
+
+  if (options?.midSign) {
+    const midTex = createBengaliSignTexture(
+      options.midSign.title,
+      options.midSign.sub,
+      options.midSign.bg,
+      '#ffffff',
+      '#fde047'
+    );
+    const midBoard = new THREE.Mesh(
+      boxGeo,
+      new THREE.MeshStandardMaterial({ map: midTex, roughness: 0.4 })
+    );
+    const span = facing === 'east' || facing === 'west' ? depth * 0.56 : width * 0.56;
+    midBoard.scale.set(span, 1.25, 0.12);
+    midBoard.position.set(
+      faceDirX * (width / 2 + 0.12),
+      Math.min(totalHeight - 1.4, 7.6),
+      faceDirZ * (depth / 2 + 0.12)
+    );
+    midBoard.rotation.y = faceRotY;
+    group.add(midBoard);
+  }
+
+  if (options?.greenLouvres) {
+    const louvreMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.55 });
+    const count = 6;
+    const span = facing === 'east' || facing === 'west' ? depth * 0.72 : width * 0.72;
+    for (let i = 0; i < count; i++) {
+      const offset = -span / 2 + (i / (count - 1)) * span;
+      const fin = new THREE.Mesh(boxGeo, louvreMat);
+      fin.scale.set(0.16, Math.max(4, totalHeight - 3.6), 0.32);
+      fin.position.set(
+        faceDirX !== 0 ? faceDirX * (width / 2 + 0.18) : offset,
+        3.6 + (totalHeight - 3.6) / 2,
+        faceDirZ !== 0 ? faceDirZ * (depth / 2 + 0.18) : offset
+      );
+      if (faceDirX === 0) fin.rotation.y = Math.PI / 2;
+      group.add(fin);
+    }
+  }
 
   // Rooftop parapet wall
   const roof = new THREE.Mesh(boxGeo, darkConcreteMat);
@@ -468,13 +560,43 @@ export function createPlayerHQLandmark(x: number, z: number): { group: THREE.Gro
   };
 }
 
-export function createRoadsideUmbrellaStall(x: number, z: number, colorHex = 0xef4444): THREE.Group {
+export function createRoadsideUmbrellaStall(
+  x: number,
+  z: number,
+  colorHex = 0xef4444,
+  rotY = 0
+): THREE.Group {
   const group = new THREE.Group();
   const table = new THREE.Mesh(boxGeo, woodMat);
-  table.scale.set(1.8, 0.85, 1.1);
-  table.position.y = 0.42;
+  table.scale.set(1.85, 0.86, 1.12);
+  table.position.y = 0.43;
   table.castShadow = true;
   group.add(table);
+
+  // Colorful Bangladeshi street stall snacks, tea kettle & biscuit/pan boxes on table
+  const boxColors = [0x16a34a, 0xdc2626, 0xfacc15, 0x0284c7];
+  [-0.56, -0.18, 0.2, 0.56].forEach((bx, idx) => {
+    const tray = new THREE.Mesh(
+      boxGeo,
+      new THREE.MeshStandardMaterial({ color: boxColors[idx % boxColors.length], roughness: 0.6 })
+    );
+    tray.scale.set(0.3, 0.24, 0.36);
+    tray.position.set(bx, 0.98, 0.18);
+    group.add(tray);
+  });
+
+  const flask = new THREE.Mesh(cylinderGeo, brassMat);
+  flask.scale.set(0.14, 0.34, 0.14);
+  flask.position.set(-0.45, 1.03, -0.25);
+  group.add(flask);
+
+  const jar = new THREE.Mesh(
+    cylinderGeo,
+    new THREE.MeshStandardMaterial({ color: 0xfef3c7, transparent: true, opacity: 0.82 })
+  );
+  jar.scale.set(0.13, 0.3, 0.13);
+  jar.position.set(0.42, 1.01, -0.22);
+  group.add(jar);
 
   const pole = new THREE.Mesh(cylinderGeo, metalMat);
   pole.scale.set(0.05, 2.7, 0.05);
@@ -482,12 +604,13 @@ export function createRoadsideUmbrellaStall(x: number, z: number, colorHex = 0xe
   group.add(pole);
 
   const canopy = new THREE.Mesh(coneGeo, new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.55 }));
-  canopy.scale.set(1.65, 0.55, 1.65);
+  canopy.scale.set(1.75, 0.56, 1.75);
   canopy.position.y = 2.75;
   canopy.castShadow = true;
   group.add(canopy);
 
-  group.position.set(x, 0, z);
+  group.position.set(x, 0.18, z);
+  group.rotation.y = rotY;
   return group;
 }
 
@@ -664,11 +787,16 @@ export function createCNGModel(vehicle?: VehicleData): THREE.Group {
   return group;
 }
 
-export function createMurirTinBusModel(vehicle?: VehicleData): THREE.Group {
+export function createMurirTinBusModel(
+  vehicle?: VehicleData,
+  bodyColorHex = 0xef4444,
+  routeTitle = 'ফার্মগেট ➔ মিরপুর ১০',
+  routeSub = 'লোকাল সুপার এক্সপ্রেস'
+): THREE.Group {
   const group = new THREE.Group();
   if (vehicle) group.name = vehicle.id;
 
-  const busBody = new THREE.Mesh(boxGeo, new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.5 }));
+  const busBody = new THREE.Mesh(boxGeo, new THREE.MeshStandardMaterial({ color: bodyColorHex, roughness: 0.5 }));
   busBody.scale.set(2.8, 2.4, 8.2);
   busBody.position.set(0, 1.8, 0);
   busBody.castShadow = true;
@@ -692,7 +820,7 @@ export function createMurirTinBusModel(vehicle?: VehicleData): THREE.Group {
   frontGlass.position.set(0, 2.2, 4.11);
   group.add(frontGlass);
 
-  const headerTex = createBengaliSignTexture('ফার্মগেট ➔ মিরপুর ১০', 'লোকাল সুপার এক্সপ্রেস', '#15803d', '#ffffff');
+  const headerTex = createBengaliSignTexture(routeTitle, routeSub, '#15803d', '#ffffff');
   const headerBoard = new THREE.Mesh(boxGeo, new THREE.MeshStandardMaterial({ map: headerTex, roughness: 0.3 }));
   headerBoard.scale.set(2.2, 0.6, 0.15);
   headerBoard.position.set(0, 2.8, 4.12);
@@ -730,6 +858,113 @@ export function createMurirTinBusModel(vehicle?: VehicleData): THREE.Group {
     group.position.set(...vehicle.position);
     group.rotation.y = vehicle.rotation;
   }
+  return group;
+}
+
+export function createLegunaModel(bodyColorHex = 0x16a34a): THREE.Group {
+  const group = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColorHex, roughness: 0.45 });
+
+  // Open-rear passenger compartment + cab
+  const cab = new THREE.Mesh(boxGeo, bodyMat);
+  cab.scale.set(1.72, 1.38, 1.5);
+  cab.position.set(0, 1.05, 1.05);
+  cab.castShadow = true;
+  group.add(cab);
+
+  const rearLower = new THREE.Mesh(boxGeo, bodyMat);
+  rearLower.scale.set(1.75, 0.8, 2.15);
+  rearLower.position.set(0, 0.76, -0.78);
+  rearLower.castShadow = true;
+  group.add(rearLower);
+
+  const canopyRoof = new THREE.Mesh(
+    boxGeo,
+    new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.6 })
+  );
+  canopyRoof.scale.set(1.78, 0.14, 2.35);
+  canopyRoof.position.set(0, 1.76, -0.82);
+  group.add(canopyRoof);
+
+  const windshield = new THREE.Mesh(boxGeo, glassMat);
+  windshield.scale.set(1.48, 0.56, 0.08);
+  windshield.position.set(0, 1.32, 1.81);
+  group.add(windshield);
+
+  const routeTex = createBengaliSignTexture('মিরপুর ১০ ➔ ফার্মগেট', 'লেগুনা সার্ভিস', '#b91c1c', '#fef08a');
+  const routeSign = new THREE.Mesh(boxGeo, new THREE.MeshStandardMaterial({ map: routeTex }));
+  routeSign.scale.set(1.36, 0.34, 0.08);
+  routeSign.position.set(0, 1.78, 1.75);
+  group.add(routeSign);
+
+  [
+    [-0.9, 0.36, 1.1],
+    [0.9, 0.36, 1.1],
+    [-0.9, 0.36, -1.2],
+    [0.9, 0.36, -1.2],
+  ].forEach(([x, y, z]) => {
+    const wheel = new THREE.Mesh(cylinderGeo, blackRubberMat);
+    wheel.scale.set(0.36, 0.16, 0.36);
+    wheel.rotation.z = Math.PI / 2;
+    wheel.position.set(x, y, z);
+    group.add(wheel);
+  });
+
+  return group;
+}
+
+export function createPickupTruckModel(cabColorHex = 0x0284c7): THREE.Group {
+  const group = new THREE.Group();
+  const cab = new THREE.Mesh(
+    boxGeo,
+    new THREE.MeshStandardMaterial({ color: cabColorHex, roughness: 0.45 })
+  );
+  cab.scale.set(1.95, 1.4, 1.45);
+  cab.position.set(0, 1.12, 1.35);
+  cab.castShadow = true;
+  group.add(cab);
+
+  const bed = new THREE.Mesh(
+    boxGeo,
+    new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.55 })
+  );
+  bed.scale.set(2.05, 0.85, 2.45);
+  bed.position.set(0, 0.85, -0.62);
+  bed.castShadow = true;
+  group.add(bed);
+
+  const tarp = new THREE.Mesh(
+    boxGeo,
+    new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.8 })
+  );
+  tarp.scale.set(1.98, 0.95, 2.35);
+  tarp.position.set(0, 1.65, -0.62);
+  group.add(tarp);
+
+  const windshield = new THREE.Mesh(boxGeo, glassMat);
+  windshield.scale.set(1.68, 0.62, 0.08);
+  windshield.position.set(0, 1.36, 2.09);
+  group.add(windshield);
+
+  const signTex = createBengaliSignTexture('মায়ের দোয়া পরিবহন', 'ট্রিপ ও মালামাল', '#15803d', '#ffffff');
+  const sideBoard = new THREE.Mesh(boxGeo, new THREE.MeshStandardMaterial({ map: signTex }));
+  sideBoard.scale.set(2.08, 0.52, 2.0);
+  sideBoard.position.set(0, 0.9, -0.62);
+  group.add(sideBoard);
+
+  [
+    [-1.02, 0.4, 1.3],
+    [1.02, 0.4, 1.3],
+    [-1.02, 0.4, -1.2],
+    [1.02, 0.4, -1.2],
+  ].forEach(([x, y, z]) => {
+    const wheel = new THREE.Mesh(cylinderGeo, blackRubberMat);
+    wheel.scale.set(0.4, 0.18, 0.4);
+    wheel.rotation.z = Math.PI / 2;
+    wheel.position.set(x, y, z);
+    group.add(wheel);
+  });
+
   return group;
 }
 
@@ -1134,17 +1369,19 @@ export function createDhakaMetroViaduct(): { group: THREE.Group; colliders: BoxC
     group.add(parapet);
   });
 
-  // Overhead Metro Station Bridges with green Bengali signboards ("চান্দা সেন্টার")
-  const signTex = createMetroStationSignTexture('চান্দা সেন্টার');
-  const signMat = new THREE.MeshStandardMaterial({
-    map: signTex,
-    emissive: new THREE.Color(0xffffff),
-    emissiveMap: signTex,
-    emissiveIntensity: 0.25,
-    roughness: 0.4,
+  // Overhead Metro Station Bridges with green Bengali signboards ("মিরপুর ১০", "ফার্মগেট", "চান্দা সেন্টার", "গুলিস্তান")
+  const metroSignMats = ['মিরপুর ১০', 'ফার্মগেট', 'চান্দা সেন্টার', 'গুলিস্তান'].map((label) => {
+    const signTex = createMetroStationSignTexture(label);
+    return new THREE.MeshStandardMaterial({
+      map: signTex,
+      emissive: new THREE.Color(0xffffff),
+      emissiveMap: signTex,
+      emissiveIntensity: 0.22,
+      roughness: 0.4,
+    });
   });
 
-  [-175, -110, -26, 38, 110, 175].forEach((sz) => {
+  [-175, -110, -26, 38, 110, 175].forEach((sz, idx) => {
     const stationBridge = new THREE.Mesh(boxGeo, darkGirderMat);
     stationBridge.scale.set(17.5, 1.9, 6.2);
     stationBridge.position.set(0, 7.8, sz);
@@ -1152,9 +1389,10 @@ export function createDhakaMetroViaduct(): { group: THREE.Group; colliders: BoxC
     group.add(stationBridge);
 
     // Front & Back Green Metro Signboards spanning across the lanes
+    const sMat = metroSignMats[idx % metroSignMats.length];
     [-4.8, 4.8].forEach((sx) => {
       [sz + 3.16, sz - 3.16].forEach((signZ) => {
-        const board = new THREE.Mesh(boxGeo, signMat);
+        const board = new THREE.Mesh(boxGeo, sMat);
         board.scale.set(5.4, 1.25, 0.14);
         board.position.set(sx, 7.8, signZ);
         group.add(board);
@@ -1227,4 +1465,115 @@ export function createDhakaMetroViaduct(): { group: THREE.Group; colliders: BoxC
   });
 
   return { group, colliders };
+}
+
+// ==========================================
+// 7. BANGLADESHI STREET POLITICAL POSTERS
+// ==========================================
+
+export function createStreetPoliticalPosters(): THREE.Group {
+  const group = new THREE.Group();
+  const posterPlaneGeo = new THREE.PlaneGeometry(1, 1);
+  const ropeMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+  const frameMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.85 });
+
+  const posterMats = ([0, 1, 2, 3, 4, 5] as const).map(
+    (v) =>
+      new THREE.MeshStandardMaterial({
+        map: createPoliticalPosterTexture(v),
+        roughness: 0.65,
+        side: THREE.DoubleSide,
+      })
+  );
+
+  // 1. Overhead hanging election poster strings across main NS & EW roads (classic Dhaka street look!)
+  const nsCrossingZs = [-154, -120, -86, -64, -34, 30, 68, 120, 158];
+  nsCrossingZs.forEach((zPos, lineIdx) => {
+    const rope = new THREE.Mesh(boxGeo, ropeMat);
+    rope.scale.set(20.6, 0.035, 0.035);
+    rope.position.set(0, 6.35, zPos);
+    group.add(rope);
+
+    const xs = [-8.2, -5.8, -3.4, -1.2, 1.2, 3.4, 5.8, 8.2];
+    xs.forEach((px, i) => {
+      const mat = posterMats[(lineIdx * 3 + i) % posterMats.length];
+      const poster = new THREE.Mesh(posterPlaneGeo, mat);
+      poster.scale.set(0.92, 1.28, 1);
+      poster.position.set(px, 5.64, zPos);
+      poster.rotation.z = ((i % 2 === 0 ? 1 : -1) * ((lineIdx + i) % 3)) * 0.03;
+      group.add(poster);
+    });
+  });
+
+  const ewCrossingXs = [-42, -26, 26, 42];
+  ewCrossingXs.forEach((xPos, lineIdx) => {
+    const rope = new THREE.Mesh(boxGeo, ropeMat);
+    rope.scale.set(0.035, 0.035, 16.5);
+    rope.position.set(xPos, 6.2, 0);
+    group.add(rope);
+
+    const zs = [-5.4, -2.8, 0, 2.8, 5.4];
+    zs.forEach((pz, i) => {
+      const mat = posterMats[(lineIdx * 2 + i + 1) % posterMats.length];
+      const poster = new THREE.Mesh(posterPlaneGeo, mat);
+      poster.scale.set(0.92, 1.28, 1);
+      poster.position.set(xPos, 5.48, pz);
+      poster.rotation.y = Math.PI / 2;
+      group.add(poster);
+    });
+  });
+
+  // 2. Wall-pasted political poster collages on roadside compound walls (x = ±13.2)
+  const wallZs = [-168, -104, -74, 84, 104, 168];
+  [-13.0, 13.0].forEach((wx, sideIdx) => {
+    wallZs.forEach((wz, wIdx) => {
+      [-3.8, -1.3, 1.3, 3.8].forEach((dz, pIdx) => {
+        const mat = posterMats[(sideIdx + wIdx * 2 + pIdx) % posterMats.length];
+        const wallPoster = new THREE.Mesh(posterPlaneGeo, mat);
+        wallPoster.scale.set(1.15, 1.55, 1);
+        wallPoster.position.set(wx > 0 ? 12.98 : -12.98, 1.32, wz + dz);
+        wallPoster.rotation.y = wx > 0 ? -Math.PI / 2 : Math.PI / 2;
+        group.add(wallPoster);
+      });
+    });
+  });
+
+  // 3. Electric pole / lamppost vertical election festoons along sidewalks
+  const poleZs = [-168, -140, -112, -84, -56, -28, 28, 56, 84, 112, 140, 168];
+  [-10.02, 10.02].forEach((xPos, sideIdx) => {
+    poleZs.forEach((pz, idx) => {
+      const mat = posterMats[(idx + sideIdx * 3) % posterMats.length];
+      const festoon = new THREE.Mesh(posterPlaneGeo, mat);
+      festoon.scale.set(0.74, 1.08, 1);
+      festoon.position.set(xPos > 0 ? 9.95 : -9.95, 2.55, pz);
+      festoon.rotation.y = xPos > 0 ? -Math.PI / 2 : Math.PI / 2;
+      group.add(festoon);
+    });
+  });
+
+  // 4. Roadside framed political standees/festoon boards along center median dividers
+  const medianPosterZs = [-164, -132, -84, -46, -22, 22, 46, 84, 132, 164];
+  medianPosterZs.forEach((pz, idx) => {
+    const stand = new THREE.Group();
+    const legL = new THREE.Mesh(cylinderGeo, frameMat);
+    legL.scale.set(0.05, 2.5, 0.05);
+    legL.position.set(-0.55, 1.25, 0);
+    stand.add(legL);
+
+    const legR = new THREE.Mesh(cylinderGeo, frameMat);
+    legR.scale.set(0.05, 2.5, 0.05);
+    legR.position.set(0.55, 1.25, 0);
+    stand.add(legR);
+
+    const board = new THREE.Mesh(posterPlaneGeo, posterMats[idx % posterMats.length]);
+    board.scale.set(1.12, 1.56, 1);
+    board.position.set(0, 1.85, 0);
+    stand.add(board);
+
+    stand.position.set(0, 0.24, pz);
+    stand.rotation.y = idx % 2 === 0 ? 0.15 : -0.15;
+    group.add(stand);
+  });
+
+  return group;
 }

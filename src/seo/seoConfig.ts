@@ -1,6 +1,6 @@
 export type PublicRoutePath = '/' | '/about' | '/how-to-play' | '/features' | '/updates';
 
-export interface PageSeoMeta {
+interface PageSeoMeta {
   path: PublicRoutePath | '/404';
   title: string;
   description: string;
@@ -14,7 +14,7 @@ export interface PageSeoMeta {
 
 const AUTHOR_NAME = 'MD Rafiul Islam';
 const DEFAULT_OG_IMAGE_PATH = '/images/chanda-de-og-preview.jpg';
-const DEFAULT_LOGO_PATH = '/images/chanda-de-logo.png';
+const DEFAULT_LOGO_PATH = '/assets/aistudio/chanda-de-logo_2705d40a.png';
 
 export const SEO_PAGES: Record<PublicRoutePath | '/404', PageSeoMeta> = {
   '/': {
@@ -143,7 +143,7 @@ export function buildAbsoluteUrl(origin: string, path: string): string {
   return origin ? `${origin}${normalizedPath}` : normalizedPath;
 }
 
-export interface FaqItem {
+interface FaqItem {
   question: string;
   answer: string;
 }

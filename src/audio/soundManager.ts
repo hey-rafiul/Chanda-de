@@ -5,9 +5,11 @@ class SoundManager {
   private musicEnabled = true;
   private sfxVolume = 0.8;
   private musicVolume = 0.45;
-  private bgmOscillatorInterval: number | null = null;
+  private bgSongAudio: HTMLAudioElement | null = null;
   private rainNoiseNode: AudioNode | null = null;
   private isBgmPlaying = false;
+  private shouldPlayBgm = false;
+  private bgmUnlockBound = false;
   private chandaDeAudio: HTMLAudioElement | null = null;
   private lastChandaVoiceTime = 0;
   private chandaRefusalClips: HTMLAudioElement[] = [];
@@ -21,6 +23,7 @@ class SoundManager {
   private vangchurClipIndex = 0;
   private lastVangchurVoiceTime = 0;
   private policeCaughtAudio: HTMLAudioElement | null = null;
+  private policeReleaseAudio: HTMLAudioElement | null = null;
 
   private initContext() {
     if (!this.ctx && typeof window !== 'undefined') {
@@ -42,9 +45,16 @@ class SoundManager {
     this.sfxVolume = sfxVol;
     this.musicVolume = musicVol;
 
-    if (!music && this.isBgmPlaying) {
-      this.stopBGM();
-    } else if (music && !this.isBgmPlaying) {
+    if (this.bgSongAudio) {
+      this.bgSongAudio.volume = this.getEffectiveBgmVolume();
+    }
+
+    if (!music) {
+      if (this.bgSongAudio && !this.bgSongAudio.paused) {
+        this.bgSongAudio.pause();
+      }
+      this.isBgmPlaying = false;
+    } else if (this.shouldPlayBgm && !this.isBgmPlaying) {
       this.startBGM();
     }
     if (this.chandaDeAudio) {
@@ -68,10 +78,19 @@ class SoundManager {
       }
     }
     if (this.policeCaughtAudio) {
-      this.policeCaughtAudio.volume = Math.min(1, sfxVol);
+      this.policeCaughtAudio.volume = Math.min(0.42, Math.max(0.05, sfxVol * 0.42));
       if (!sound) {
         this.policeCaughtAudio.pause();
       }
+    }
+    if (this.policeReleaseAudio) {
+      this.policeReleaseAudio.volume = Math.min(0.65, Math.max(0.05, sfxVol * 0.65));
+      if (!sound) {
+        this.policeReleaseAudio.pause();
+      }
+    }
+    if (!sound) {
+      this.setRain(false);
     }
   }
 
@@ -204,11 +223,11 @@ class SoundManager {
 
     try {
       if (!this.policeCaughtAudio) {
-        this.policeCaughtAudio = new Audio('/assets/aistudio/videoplayback-2_hqNMyaX5_2392bc85.mp3');
+        this.policeCaughtAudio = new Audio('/assets/aistudio/ssstik-mp3cutnet_4SqJkrAD_3626ec5b.mp3');
         this.policeCaughtAudio.preload = 'auto';
       }
       this.policeCaughtAudio.pause();
-      this.policeCaughtAudio.volume = Math.min(1, Math.max(0.1, this.sfxVolume));
+      this.policeCaughtAudio.volume = Math.min(0.42, Math.max(0.05, this.sfxVolume * 0.42));
       this.policeCaughtAudio.currentTime = 0;
       const p = this.policeCaughtAudio.play();
       if (p && typeof p.catch === 'function') {
@@ -225,6 +244,32 @@ class SoundManager {
     if (this.policeCaughtAudio) {
       this.policeCaughtAudio.pause();
       this.policeCaughtAudio.currentTime = 0;
+    }
+  }
+
+  // Play release dialogue clip at medium volume when player gets released from police custody
+  public playPoliceReleaseAudio() {
+    if (!this.soundEnabled || typeof window === 'undefined') return;
+    this.stopPoliceCaughtAudio();
+    try {
+      if (!this.policeReleaseAudio) {
+        this.policeReleaseAudio = new Audio('/assets/aistudio/DUM_DUM_Tedao_acab623e.mp3');
+        this.policeReleaseAudio.preload = 'auto';
+      }
+      this.policeReleaseAudio.pause();
+      this.policeReleaseAudio.volume = Math.min(0.65, Math.max(0.08, this.sfxVolume * 0.65));
+      this.policeReleaseAudio.currentTime = 0;
+      const p = this.policeReleaseAudio.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => {});
+      }
+    } catch {}
+  }
+
+  public stopPoliceReleaseAudio() {
+    if (this.policeReleaseAudio) {
+      this.policeReleaseAudio.pause();
+      this.policeReleaseAudio.currentTime = 0;
     }
   }
 
@@ -634,70 +679,75 @@ class SoundManager {
     osc.stop(now + 0.1);
   }
 
-  public startBGM() {
-    if (this.isBgmPlaying || !this.musicEnabled) return;
-    this.initContext();
-    if (!this.ctx) return;
-
-    this.isBgmPlaying = true;
-    let step = 0;
-    const tempoMs = 220;
-    const scale = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25];
-
-    this.bgmOscillatorInterval = window.setInterval(() => {
-      if (!this.ctx || !this.musicEnabled || !this.isBgmPlaying) return;
-      const now = this.ctx.currentTime;
-
-      if (step % 4 === 0) {
-        const bass = this.ctx.createOscillator();
-        const bassGain = this.ctx.createGain();
-        bass.frequency.setValueAtTime(110, now);
-        bass.frequency.exponentialRampToValueAtTime(40, now + 0.12);
-        bassGain.gain.setValueAtTime(0.14 * this.musicVolume, now);
-        bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-        bass.connect(bassGain);
-        bassGain.connect(this.ctx.destination);
-        bass.start(now);
-        bass.stop(now + 0.16);
-      }
-
-      if (step % 2 === 1) {
-        const tick = this.ctx.createOscillator();
-        const tickGain = this.ctx.createGain();
-        tick.type = 'triangle';
-        tick.frequency.setValueAtTime(600, now);
-        tick.frequency.exponentialRampToValueAtTime(200, now + 0.05);
-        tickGain.gain.setValueAtTime(0.07 * this.musicVolume, now);
-        tickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-        tick.connect(tickGain);
-        tickGain.connect(this.ctx.destination);
-        tick.start(now);
-        tick.stop(now + 0.06);
-      }
-
-      if (step % 2 === 0 && Math.random() > 0.3) {
-        const noteIndex = Math.floor(Math.random() * scale.length);
-        const pluck = this.ctx.createOscillator();
-        const pluckGain = this.ctx.createGain();
-        pluck.type = 'sine';
-        pluck.frequency.setValueAtTime(scale[noteIndex], now);
-        pluckGain.gain.setValueAtTime(0.06 * this.musicVolume, now);
-        pluckGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-        pluck.connect(pluckGain);
-        pluckGain.connect(this.ctx.destination);
-        pluck.start(now);
-        pluck.stop(now + 0.19);
-      }
-
-      step = (step + 1) % 16;
-    }, tempoMs);
+  private getEffectiveBgmVolume(): number {
+    // Keep background song soft and non-intrusive compared to voice clips and SFX
+    return Math.min(0.24, Math.max(0, this.musicVolume * 0.25));
   }
 
-  public stopBGM() {
+  private ensureBgSongAudio() {
+    if (this.bgSongAudio || typeof window === 'undefined') return;
+    const audio = new Audio('/assets/aistudio/Chanda_de_bg_song_a822b1ef.mp3');
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.addEventListener('ended', () => {
+      if (this.shouldPlayBgm && this.musicEnabled) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      }
+    });
+    this.bgSongAudio = audio;
+  }
+
+  private bindBgmAutoplayUnlock() {
+    if (this.bgmUnlockBound || typeof window === 'undefined') return;
+    this.bgmUnlockBound = true;
+    const unlock = () => {
+      this.bgmUnlockBound = false;
+      window.removeEventListener('pointerdown', unlock);
+      window.removeEventListener('keydown', unlock);
+      if (this.shouldPlayBgm && this.musicEnabled && !this.isBgmPlaying) {
+        this.startBGM();
+      }
+    };
+    window.addEventListener('pointerdown', unlock, { once: true });
+    window.addEventListener('keydown', unlock, { once: true });
+  }
+
+  public startBGM() {
+    this.shouldPlayBgm = true;
+    if (!this.musicEnabled || typeof window === 'undefined') return;
+
+    this.ensureBgSongAudio();
+    if (!this.bgSongAudio) return;
+
+    this.bgSongAudio.loop = true;
+    this.bgSongAudio.volume = this.getEffectiveBgmVolume();
+
+    if (!this.bgSongAudio.paused && this.isBgmPlaying) return;
+
+    try {
+      const playPromise = this.bgSongAudio.play();
+      this.isBgmPlaying = true;
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {
+          this.isBgmPlaying = false;
+          this.bindBgmAutoplayUnlock();
+        });
+      }
+    } catch {
+      this.isBgmPlaying = false;
+      this.bindBgmAutoplayUnlock();
+    }
+  }
+
+  public stopBGM(resetPosition = false) {
+    this.shouldPlayBgm = false;
     this.isBgmPlaying = false;
-    if (this.bgmOscillatorInterval !== null) {
-      clearInterval(this.bgmOscillatorInterval);
-      this.bgmOscillatorInterval = null;
+    if (this.bgSongAudio) {
+      this.bgSongAudio.pause();
+      if (resetPosition) {
+        this.bgSongAudio.currentTime = 0;
+      }
     }
   }
 

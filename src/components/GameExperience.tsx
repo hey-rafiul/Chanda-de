@@ -71,6 +71,10 @@ export const GameExperience: React.FC<GameExperienceProps> = ({ launchMode, onEx
     return () => {
       document.documentElement.style.overflow = prevHtmlOverflow;
       document.body.style.overflow = prevBodyOverflow;
+      soundManager.stopBGM(true);
+      soundManager.stopShopChandaAudio();
+      soundManager.stopPoliceCaughtAudio();
+      soundManager.stopPoliceReleaseAudio();
     };
   }, []);
 

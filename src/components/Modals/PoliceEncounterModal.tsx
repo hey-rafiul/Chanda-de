@@ -108,7 +108,6 @@ export const PoliceEncounterModal: React.FC = () => {
 
   const handleFinish = () => {
     soundManager.stopPoliceCaughtAudio();
-    soundManager.playDialogueBlip(1.25);
     closeModal();
   };
 
@@ -119,23 +118,33 @@ export const PoliceEncounterModal: React.FC = () => {
         <div className="h-1.5 sm:h-2 w-full bg-gradient-to-r from-red-600 via-blue-500 to-red-600 shrink-0" />
 
         {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2.5 sm:p-3.5 bg-gradient-to-r from-red-700/30 via-slate-900/60 to-blue-900/30 border-b border-slate-700/60 shrink-0">
-          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-red-600 to-blue-600 border border-white/20 flex items-center justify-center text-white shadow-lg shrink-0">
-              <Siren className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="font-black text-white text-xs sm:text-base leading-tight truncate">
-                কোতোয়ালী থানা — গ্রেপ্তার নোটিশ!
-              </h2>
-              <div className="text-[10px] sm:text-[11px] font-semibold text-sky-300 truncate">
-                {notice.squad}
-              </div>
-            </div>
+        <div className="flex flex-col gap-2 px-3 py-2.5 sm:px-4 sm:py-3 bg-gradient-to-r from-red-700/30 via-slate-900/60 to-blue-900/30 border-b border-slate-700/60 shrink-0">
+          <div className="flex items-center justify-center gap-2 pb-1.5 border-b border-white/10">
+            <span className="h-px flex-1 bg-gradient-to-r from-transparent to-amber-400/55" />
+            <span className="text-[10px] sm:text-[11px] font-semibold tracking-wider text-amber-200/95 whitespace-nowrap">
+              Game Made By <span className="text-white font-bold">MD Rafiul Islam</span>
+            </span>
+            <span className="h-px flex-1 bg-gradient-to-l from-transparent to-amber-400/55" />
           </div>
 
-          <div className="animate-stamp-slam -rotate-6 px-2 py-0.5 rounded-lg border-2 border-rose-400 bg-rose-950/75 text-rose-200 font-black text-[10px] tracking-wide shadow shrink-0">
-            ধরা খাইছে!
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-red-600 to-blue-600 border border-white/20 flex items-center justify-center text-white shadow-lg shrink-0">
+                <Siren className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-black text-white text-xs sm:text-base leading-tight truncate">
+                  কোতোয়ালী থানা — গ্রেপ্তার নোটিশ!
+                </h2>
+                <div className="text-[10px] sm:text-[11px] font-semibold text-sky-300 truncate">
+                  {notice.squad}
+                </div>
+              </div>
+            </div>
+
+            <div className="animate-stamp-slam -rotate-6 px-2 py-0.5 rounded-lg border-2 border-rose-400 bg-rose-950/75 text-rose-200 font-black text-[10px] tracking-wide shadow shrink-0">
+              ধরা খাইছে!
+            </div>
           </div>
         </div>
 

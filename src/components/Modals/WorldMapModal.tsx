@@ -38,25 +38,26 @@ export const WorldMapModal: React.FC<WorldMapModalProps> = ({ onTeleport }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/90">
-      <div className="relative w-full max-w-3xl rounded-3xl bg-[#0B101E] border-2 border-blue-500/60 shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]">
+      <div className="relative w-full max-w-3xl rounded-3xl bd-signboard overflow-hidden flex flex-col max-h-[90dvh]">
+        <div className="h-2 w-full bd-awning-gold shrink-0" />
         {/* Header */}
-        <div className="flex items-center justify-between p-3.5 sm:p-4 bg-gradient-to-r from-blue-600/30 to-slate-900 border-b border-slate-800">
+        <div className="flex items-center justify-between p-3.5 sm:p-4 bg-gradient-to-r from-emerald-950/75 via-[#0d1c16] to-amber-950/35 border-b border-amber-500/35">
           <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-500 flex items-center justify-center text-slate-950 font-black text-lg sm:text-xl flex-shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-400 flex items-center justify-center text-slate-950 font-black text-lg sm:text-xl flex-shrink-0 shadow">
               🗺️
             </div>
             <div>
-              <h2 className="font-bold text-white text-sm sm:text-lg leading-tight">
-                চান্দা সিটির সম্পূর্ণ মানচিত্র (Chanda City Map)
+              <h2 className="font-bold text-amber-100 text-sm sm:text-lg leading-tight">
+                চান্দা সিটির বাজার ও এলাকার মানচিত্র
               </h2>
-              <div className="text-[11px] sm:text-xs text-slate-400">
+              <div className="text-[11px] sm:text-xs text-amber-200/75">
                 {CITY_ZONES.length}টি এলাকা • {shopsCount}টি দোকান • ক্লিক করে দ্রুত যাতায়াত করুন
               </div>
             </div>
           </div>
           <button
             onClick={closeModal}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all"
+            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-amber-500/35 text-amber-200 hover:text-white transition-all"
           >
             <X className="w-5 h-5" />
           </button>

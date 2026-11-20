@@ -195,7 +195,7 @@ export interface GameState {
 }
 
 const initialPlayerStats: PlayerStats = {
-  name: 'মামা (Boss Mama)',
+  name: 'Chanda Bhai',
   level: 1,
   xp: 0,
   nextLevelXp: 300,
@@ -250,16 +250,17 @@ function computeNearestZoneId(pos: [number, number, number]): string {
 }
 
 const defaultEquippedOutfit: EquippedOutfit = {
-  shirt: 'shirt_black_floral',
+  shirt: 'shirt_black_polo',
   bottom: 'bottom_black_cargo',
   glasses: 'glasses_black_shades',
   hat: 'hat_none',
-  shoes: 'shoes_white_red',
-  watch: 'watch_gold_black',
+  shoes: 'shoes_combat_boots',
+  watch: 'watch_none',
   necklace: 'necklace_none',
 };
 
 let notifyTimeoutId: ReturnType<typeof setTimeout> | null = null;
+let eventTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
 export const useGameStore = create<GameState>((set, get) => ({
   gameMode: 'menu',
@@ -310,15 +311,18 @@ export const useGameStore = create<GameState>((set, get) => ({
   setGameMode: (mode) => {
     set({ gameMode: mode });
     if (mode === 'playing') {
-      soundManager.startBGM();
-      const weather = get().weather;
+      const { weather, policeState, activeModal } = get();
+      if (policeState.status !== 'caught' && activeModal !== 'police_encounter') {
+        soundManager.startBGM();
+      }
       soundManager.setRain(weather === 'rainy' || weather === 'stormy');
     } else {
-      soundManager.stopBGM();
+      soundManager.stopBGM(mode === 'menu');
       soundManager.stopShopChandaAudio();
       if (mode === 'menu') {
         soundManager.setRain(false);
         soundManager.stopPoliceCaughtAudio();
+        soundManager.stopPoliceReleaseAudio();
       }
     }
   },
@@ -329,7 +333,15 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   closeModal: () => {
+    const wasPoliceNotice = get().activeModal === 'police_encounter';
     set({ activeModal: null, selectedVehicle: null });
+    if (wasPoliceNotice) {
+      soundManager.stopPoliceCaughtAudio();
+      soundManager.playPoliceReleaseAudio();
+      if (get().gameMode === 'playing') {
+        soundManager.startBGM();
+      }
+    }
   },
 
   setSelectedVehicle: (vehicle) => {
@@ -597,6 +609,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   caughtByPolice: () => {
     if (get().policeState.status === 'caught') return;
+    soundManager.stopBGM(true);
     soundManager.playPoliceCaughtAudio();
     set((state) => ({
       heroExpression: 'shocked',
@@ -1231,7 +1244,11 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     get().notify(`বিশেষ ঘটনা: ${ev.titleBn}`, ev.description, 'warning');
 
-    setTimeout(() => {
+    if (eventTimeoutId !== null) {
+      clearTimeout(eventTimeoutId);
+    }
+    eventTimeoutId = setTimeout(() => {
+      eventTimeoutId = null;
       if (get().activeEvent?.id === ev.id) {
         get().clearEvent();
       }
@@ -1239,6 +1256,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   clearEvent: () => {
+    if (eventTimeoutId !== null) {
+      clearTimeout(eventTimeoutId);
+      eventTimeoutId = null;
+    }
     set({ activeEvent: null });
   },
 
@@ -1250,6 +1271,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       newSettings.musicEnabled,
       newSettings.sfxVolume,
       newSettings.musicVolume
+    );
+    const { gameMode, weather } = get();
+    soundManager.setRain(
+      newSettings.soundEnabled &&
+        gameMode === 'playing' &&
+        (weather === 'rainy' || weather === 'stormy')
     );
     get().saveGame();
   },
@@ -1287,6 +1314,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       const data = JSON.parse(raw);
 
       const mergedStats: PlayerStats = { ...initialPlayerStats, ...(data.playerStats || {}) };
+      if (!mergedStats.name || mergedStats.name.includes('Boss Mama')) {
+        mergedStats.name = 'Chanda Bhai';
+      }
       const mergedSettings: GameSettings = { ...initialSettings, ...(data.settings || {}) };
 
       // Ensure new destructible coordinates from cityData replace stale saved positions if keys changed
@@ -1307,10 +1337,21 @@ export const useGameStore = create<GameState>((set, get) => ({
           })
         : INITIAL_CUSTOMIZATION.map((c) => ({ ...c }));
 
-      const mergedEquipped: EquippedOutfit = {
+      const rawEquipped: EquippedOutfit = {
         ...defaultEquippedOutfit,
         ...(data.equipped || {}),
       };
+      const isUntouchedLegacyDefault =
+        rawEquipped.shirt === 'shirt_black_floral' &&
+        rawEquipped.bottom === 'bottom_black_cargo' &&
+        rawEquipped.glasses === 'glasses_black_shades' &&
+        rawEquipped.hat === 'hat_none' &&
+        rawEquipped.shoes === 'shoes_white_red' &&
+        rawEquipped.watch === 'watch_gold_black' &&
+        rawEquipped.necklace === 'necklace_none';
+      const mergedEquipped: EquippedOutfit = isUntouchedLegacyDefault
+        ? { ...defaultEquippedOutfit }
+        : rawEquipped;
 
       const savedBusinesses: BusinessItem[] = Array.isArray(data.businesses)
         ? INITIAL_BUSINESS_ITEMS.map((base) => {
@@ -1368,7 +1409,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         visitedShopIds: Array.isArray(data.visitedShopIds) ? data.visitedShopIds : [],
         transactions: Array.isArray(data.transactions) ? data.transactions : [...initialTransactions],
         settings: mergedSettings,
-        gameTimeMinutes: data.gameTimeMinutes || 540,
+        gameTimeMinutes: typeof data.gameTimeMinutes === 'number' ? data.gameTimeMinutes : 540,
         timeOfDay: data.timeOfDay || 'morning',
         activeModal: null,
         activeBrawl: null,
@@ -1399,6 +1440,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   resetGame: () => {
+    if (eventTimeoutId !== null) {
+      clearTimeout(eventTimeoutId);
+      eventTimeoutId = null;
+    }
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(LEGACY_STORAGE_KEY);
@@ -1442,6 +1487,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     soundManager.resetShopRefusals();
     soundManager.stopShopChandaAudio();
     soundManager.stopPoliceCaughtAudio();
+    soundManager.stopPoliceReleaseAudio();
     soundManager.setRain(false);
     get().setGameMode('playing');
     get().notify('নতুন খেলা শুরু হলো!', 'চান্দা সিটির নতুন যাত্রা শুভ হোক!', 'info');

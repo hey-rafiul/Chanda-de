@@ -114,34 +114,40 @@ export const GameHUD: React.FC<GameHUDProps> = ({
       <div className="relative z-10 flex justify-between items-start gap-1.5 sm:gap-3">
         {/* Top-Left Column: Player Profile Card + Mobile District & Delivery Badges */}
         <div className="flex flex-col items-start gap-1.5 min-w-0 max-w-[58vw] sm:max-w-none">
-          <div className="pointer-events-auto flex items-center gap-2 sm:gap-3 p-1.5 sm:p-3 rounded-2xl bg-[#0B101E]/92 border border-slate-700/90 shadow-2xl w-full sm:w-auto">
+          <div className="pointer-events-auto relative overflow-hidden flex items-center gap-2 sm:gap-3 pt-2.5 pb-1.5 px-2 sm:pt-3.5 sm:pb-2.5 sm:px-3 rounded-2xl bd-signboard w-full sm:w-auto">
+            <div className="absolute top-0 inset-x-0 h-1.5 bd-awning-stripe" />
             <div className="relative w-9 h-9 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-tr from-amber-600 to-yellow-400 p-0.5 shadow-md flex items-center justify-center flex-shrink-0">
               <div className="w-full h-full rounded-[10px] bg-slate-950 flex items-center justify-center text-base sm:text-xl">
                 🕶️
               </div>
-              <div className="absolute -bottom-1 -right-1 px-1 sm:px-1.5 py-0.5 rounded-full bg-amber-500 text-slate-950 font-black text-[9px] sm:text-[10px] shadow border border-slate-950 tabular-nums">
+              <div className="absolute -bottom-1 -right-1 px-1 sm:px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[9px] sm:text-[10px] shadow border border-slate-950 tabular-nums">
                 Lv.{playerStats.level}
               </div>
             </div>
 
             <div className="flex flex-col min-w-0 sm:min-w-[175px] gap-0.5 sm:gap-1 flex-1">
-              <div className="flex items-center justify-between gap-1.5 sm:gap-3">
-                <span className="font-bold text-white text-[11px] sm:text-sm leading-tight truncate">
+              <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+                <span className="font-extrabold text-amber-100 text-[11px] sm:text-sm leading-tight truncate">
                   {playerStats.name}
                 </span>
-                <span className="px-1 sm:px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/40 text-[9px] sm:text-[10px] font-bold text-amber-300 whitespace-nowrap tabular-nums flex-shrink-0">
-                  মান {playerStats.reputation}%
-                </span>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <span className="px-1.5 py-0.5 rounded-md bg-emerald-600/90 border border-emerald-300/60 text-[9px] sm:text-[10px] font-black text-white whitespace-nowrap tabular-nums shadow-sm">
+                    আজ +৳{playerStats.dailyIncome.toLocaleString()}
+                  </span>
+                  <span className="px-1 sm:px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-400/50 text-[9px] sm:text-[10px] font-bold text-emerald-200 whitespace-nowrap tabular-nums">
+                    মান {playerStats.reputation}%
+                  </span>
+                </div>
               </div>
 
-              <div className="w-full bg-slate-800 rounded-full h-1.5 sm:h-2 overflow-hidden border border-slate-700/70">
+              <div className="w-full bg-slate-900 rounded-full h-1.5 sm:h-2 overflow-hidden border border-amber-500/40">
                 <div
                   className="bg-gradient-to-r from-amber-500 to-yellow-300 h-full rounded-full transition-all duration-300"
                   style={{ width: `${xpPercent}%` }}
                 />
               </div>
 
-              <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 tabular-nums">
+              <div className="flex justify-between text-[9px] sm:text-[10px] text-amber-200/75 tabular-nums">
                 <span>XP: {playerStats.xp.toLocaleString()}</span>
                 <span className="hidden sm:inline">লক্ষ্য: {playerStats.nextLevelXp.toLocaleString()}</span>
               </div>
@@ -218,16 +224,17 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           </div>
         </div>
 
-        {/* Top-Center (Desktop): District, Atmosphere, Event, Delivery & Notification Below Location */}
+        {/* Top-Center (Desktop): Bangladeshi Highway/Bazaar Signboard for District & Atmosphere */}
         <div className="hidden md:flex flex-col items-center gap-1.5">
-          <div className="pointer-events-auto px-3.5 py-1.5 rounded-xl bg-[#0B101E]/92 border border-slate-700/90 shadow-lg flex items-center gap-2.5 text-xs font-semibold text-slate-200">
+          <div className="pointer-events-auto relative overflow-hidden px-4 py-1.5 pt-2.5 rounded-xl bg-[#0b2a19]/95 border-2 border-amber-400/75 shadow-lg flex items-center gap-2.5 text-xs font-semibold text-amber-50">
+            <div className="absolute top-0 inset-x-0 h-1 bd-awning-gold" />
             <div className="flex items-center gap-1.5 text-amber-300 font-bold">
               <MapPin className="w-3.5 h-3.5 text-amber-400" />
               <span>{currentZone.nameBn}</span>
             </div>
-            <span className="text-slate-600">|</span>
+            <span className="text-emerald-500">|</span>
             <div className="flex items-center gap-1.5">
-              <WeatherIcon className="w-3.5 h-3.5 text-amber-400" />
+              <WeatherIcon className="w-3.5 h-3.5 text-amber-300" />
               <span>{timeBn}</span>
             </div>
           </div>
@@ -301,12 +308,12 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               soundManager.playDialogueBlip(1.1);
               onToggleMenu();
             }}
-            aria-label="মেনু খুলুন"
-            title="মেনু খুলুন"
-            className={`pointer-events-auto relative h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl border shadow-lg flex items-center gap-1.5 transition-colors active:scale-95 cursor-pointer ${
+            aria-label="দোকান ও সিটি মেনু খুলুন"
+            title="দোকান ও সিটি মেনু খুলুন"
+            className={`pointer-events-auto relative h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-xl border-2 shadow-lg flex items-center gap-1.5 transition-colors active:scale-95 cursor-pointer ${
               isMenuOpen
-                ? 'bg-amber-500 text-slate-950 border-amber-300'
-                : 'bg-[#0B101E]/92 hover:bg-slate-900 border-amber-400/55 hover:border-amber-400 text-amber-200'
+                ? 'bg-amber-400 text-slate-950 border-yellow-200'
+                : 'bg-[#0e1f17]/95 hover:bg-[#132c20] border-amber-400/70 hover:border-amber-300 text-amber-200'
             }`}
           >
             {isMenuOpen ? (
@@ -314,7 +321,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             ) : (
               <Menu className="w-4 h-4 text-amber-400" />
             )}
-            <span className="text-[11px] sm:text-xs font-bold leading-none">মেনু</span>
+            <span className="text-[11px] sm:text-xs font-bold leading-none">দোকান মেনু</span>
             {claimableCount > 0 && !isMenuOpen && (
               <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white font-black text-[9px] leading-none tabular-nums">
                 {claimableCount}
@@ -324,18 +331,19 @@ export const GameHUD: React.FC<GameHUDProps> = ({
 
           <button
             onClick={onOpenEconomy}
-            className="pointer-events-auto flex items-center gap-1.5 sm:gap-2.5 p-1.5 sm:p-2.5 rounded-2xl bg-[#0B101E]/92 border border-amber-500/45 hover:border-amber-400 shadow-2xl transition-colors text-right"
-            title="অর্থনৈতিক হিসাব দেখুন"
+            className="pointer-events-auto relative overflow-hidden flex items-center gap-1.5 sm:gap-2.5 p-1.5 pt-2.5 sm:p-2.5 sm:pt-3 rounded-2xl bd-halkhata hover:border-amber-300 shadow-2xl transition-colors text-right cursor-pointer"
+            title="হালখাতা ও গল্লার হিসাব দেখুন"
           >
+            <div className="absolute top-0 inset-x-0 h-1 bd-awning-gold" />
             <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-slate-950 shadow">
               <Coins className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
             </div>
             <div className="flex flex-col">
-              <div className="font-arcade text-base sm:text-2xl text-amber-400 font-bold leading-none tracking-wide tabular-nums">
+              <div className="font-arcade text-base sm:text-2xl text-amber-300 font-bold leading-none tracking-wide tabular-nums">
                 ৳{playerStats.balance.toLocaleString()}
               </div>
-              <div className="hidden sm:block text-[10px] text-slate-400 mt-0.5 tabular-nums">
-                আজকের আয়: +৳{playerStats.dailyIncome.toLocaleString()}
+              <div className="hidden sm:block text-[10px] text-amber-200/75 mt-0.5 tabular-nums">
+                আজকের গল্লা: +৳{playerStats.dailyIncome.toLocaleString()}
               </div>
             </div>
           </button>
@@ -400,15 +408,16 @@ export const GameHUD: React.FC<GameHUDProps> = ({
 
       {/* ================= ACTIVE SHOP BRAWL (MARAMARI & VANGCHUR) BAR ================= */}
       {activeBrawl && (
-        <div className="self-center mt-1 sm:mt-2 pointer-events-auto w-full max-w-xs sm:max-w-md px-3 sm:px-4 py-2 sm:py-3 rounded-2xl bg-[#0B101E]/95 border-2 border-rose-500 shadow-2xl z-20 flex flex-col gap-1.5 sm:gap-2">
+        <div className="self-center mt-1 sm:mt-2 pointer-events-auto relative overflow-hidden w-full max-w-xs sm:max-w-md px-3 sm:px-4 pt-3 pb-2.5 sm:pt-3.5 sm:pb-3 rounded-2xl bd-halkhata shadow-2xl z-20 flex flex-col gap-1.5 sm:gap-2">
+          <div className="absolute top-0 inset-x-0 h-1.5 bd-awning-stripe" />
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
               <Swords className="w-4 h-4 text-rose-400 flex-shrink-0" />
-              <span className="font-black text-xs sm:text-sm text-white truncate">
+              <span className="font-black text-xs sm:text-sm text-amber-100 truncate">
                 {activeBrawl.shopNameBn}
               </span>
             </div>
-            <span className="text-[11px] sm:text-xs font-black text-amber-400 tabular-nums flex-shrink-0">
+            <span className="text-[11px] sm:text-xs font-black text-amber-300 tabular-nums flex-shrink-0">
               ৳{activeBrawl.rewardMoney}
             </span>
           </div>
@@ -434,7 +443,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                 </div>
                 <div className="flex flex-col gap-1">
                   <div className="flex justify-between text-amber-300 gap-1">
-                    <span className="truncate">প্রতিরোধ</span>
+                    <span className="truncate">দোকানের প্রতিরোধ</span>
                     <span>{activeBrawl.shopResistance}%</span>
                   </div>
                   <div className="w-full h-1.5 sm:h-2 bg-slate-800 rounded-full overflow-hidden">
@@ -456,30 +465,31 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         </div>
       )}
 
-      {/* ================= INTERACTION PROMPT ================= */}
+      {/* ================= INTERACTION PROMPT (BANGLADESHI DOKAAN SIGNBOARD) ================= */}
       {nearbyTarget && (
         <div className="self-center mb-36 sm:mb-8 [@media(max-height:480px)]:mb-10 pointer-events-auto flex flex-col items-center z-20 max-w-[92vw] [@media(max-height:480px)]:max-w-[52vw]">
-          <div className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl bg-[#0B101E]/95 border-2 border-amber-400 shadow-2xl flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5">
+          <div className="relative overflow-hidden px-3 sm:px-4 pt-2.5 pb-2 sm:pt-3 sm:pb-2.5 rounded-2xl bd-signboard flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5">
+            <div className="absolute top-0 inset-x-0 h-1.5 bd-awning-stripe" />
             {nearbyTarget.type !== 'shop' && nearbyTarget.type !== 'destructible' && (
               <div className="hidden sm:flex w-8 h-8 rounded-xl bg-amber-400 text-slate-950 items-center justify-center font-black text-sm">
                 E
               </div>
             )}
             <div className="flex flex-col text-center sm:text-left">
-              <span className="font-bold text-white text-[11px] sm:text-sm leading-tight">
+              <span className="font-bold text-amber-200/80 text-[10px] sm:text-xs leading-tight">
                 {nearbyTarget.type === 'delivery' && 'পার্সেল ডেলিভারি দিন'}
-                {nearbyTarget.type === 'shop' && 'দোকানের সামনে'}
+                {nearbyTarget.type === 'shop' && 'বাংলাদেশী দোকানের সামনে'}
                 {nearbyTarget.type === 'vehicle' && 'যানবাহন / ভাড়া'}
-                {nearbyTarget.type === 'destructible' && 'ভাঙচুর / লাথি মারুন'}
+                {nearbyTarget.type === 'destructible' && 'দোকানের আসবাব / বোর্ড'}
               </span>
-              <span className="text-[10px] sm:text-[11px] text-amber-300 font-medium truncate max-w-[190px] sm:max-w-[260px]">
+              <span className="text-[12px] sm:text-[14px] text-amber-300 font-black truncate max-w-[190px] sm:max-w-[270px]">
                 {nearbyTarget.name}
               </span>
             </div>
             {nearbyTarget.type !== 'destructible' && nearbyTarget.type !== 'shop' && (
               <button
                 onClick={onInteract}
-                className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] sm:text-xs shadow transition-transform active:scale-95"
+                className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[11px] sm:text-xs shadow transition-transform active:scale-95"
               >
                 {nearbyTarget.type === 'delivery' ? 'ডেলিভারি' : 'যাত্রা / ভাড়া'}
               </button>
@@ -487,7 +497,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             {(nearbyTarget.type === 'destructible' || nearbyTarget.type === 'shop') && (
               <button
                 onClick={onSmash}
-                className="px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] sm:text-xs shadow transition-transform active:scale-95 flex items-center gap-1"
+                className="px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-[11px] sm:text-xs shadow transition-transform active:scale-95 flex items-center gap-1 border border-yellow-300/60"
               >
                 <Swords className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span>{nearbyTarget.type === 'shop' ? 'ভাঙচুর [F]' : 'লাথি'}</span>

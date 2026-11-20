@@ -67,8 +67,8 @@ export const BottomDock: React.FC<BottomDockProps> = ({
       id: 'missions',
       icon: ScrollText,
       iconColor: 'text-amber-300',
-      tileBg: 'from-amber-500/20 to-amber-950/40 border-amber-500/35',
-      label: 'মিশন',
+      tileBg: 'from-amber-500/20 to-amber-950/45 border-amber-500/45',
+      label: 'মিশন খাতা',
       badge: claimableMissions,
       badgeColor: 'bg-amber-400 text-slate-950',
     },
@@ -76,15 +76,15 @@ export const BottomDock: React.FC<BottomDockProps> = ({
       id: 'business',
       icon: Building2,
       iconColor: 'text-emerald-300',
-      tileBg: 'from-emerald-500/20 to-emerald-950/40 border-emerald-500/35',
-      label: 'ব্যবসা',
+      tileBg: 'from-emerald-500/20 to-emerald-950/45 border-emerald-500/45',
+      label: 'দোকান ব্যবসা',
     },
     {
       id: 'repair',
       icon: Wrench,
       iconColor: 'text-orange-300',
-      tileBg: 'from-orange-500/20 to-orange-950/40 border-orange-500/35',
-      label: 'মেরামত',
+      tileBg: 'from-orange-500/20 to-orange-950/45 border-orange-500/45',
+      label: 'মিস্ত্রি ঘর',
       badge: damagedObjectsCount,
       badgeColor: 'bg-orange-500 text-white',
     },
@@ -92,29 +92,29 @@ export const BottomDock: React.FC<BottomDockProps> = ({
       id: 'customization',
       icon: Shirt,
       iconColor: 'text-purple-300',
-      tileBg: 'from-purple-500/20 to-purple-950/40 border-purple-500/35',
-      label: 'পোশাক',
+      tileBg: 'from-purple-500/20 to-purple-950/45 border-purple-500/45',
+      label: 'টেইলার্স',
     },
     {
       id: 'inventory',
       icon: Backpack,
       iconColor: 'text-cyan-300',
-      tileBg: 'from-cyan-500/20 to-cyan-950/40 border-cyan-500/35',
-      label: 'ব্যাগ',
+      tileBg: 'from-cyan-500/20 to-cyan-950/45 border-cyan-500/45',
+      label: 'টং ব্যাগ',
     },
     {
       id: 'economy',
       icon: Wallet,
       iconColor: 'text-yellow-300',
-      tileBg: 'from-yellow-500/20 to-yellow-950/40 border-yellow-500/35',
-      label: 'হিসাব',
+      tileBg: 'from-yellow-500/20 to-yellow-950/45 border-yellow-500/45',
+      label: 'হালখাতা',
     },
     {
       id: 'achievements',
       icon: Trophy,
       iconColor: 'text-pink-300',
-      tileBg: 'from-pink-500/20 to-pink-950/40 border-pink-500/35',
-      label: 'অর্জন',
+      tileBg: 'from-pink-500/20 to-pink-950/45 border-pink-500/45',
+      label: 'সাফল্য',
       badge: claimableAchievements,
       badgeColor: 'bg-pink-500 text-white',
     },
@@ -122,8 +122,8 @@ export const BottomDock: React.FC<BottomDockProps> = ({
       id: 'map',
       icon: Map,
       iconColor: 'text-sky-300',
-      tileBg: 'from-sky-500/20 to-sky-950/40 border-sky-500/35',
-      label: 'মানচিত্র',
+      tileBg: 'from-sky-500/20 to-sky-950/45 border-sky-500/45',
+      label: 'এলাকা ম্যাপ',
     },
   ];
 
@@ -138,23 +138,24 @@ export const BottomDock: React.FC<BottomDockProps> = ({
         className="absolute inset-0 bg-slate-950/40"
       />
 
-      {/* Top-Anchored Unique Command Menu (Mobile + Desktop) */}
+      {/* Top-Anchored Bangladeshi Dokaan Command Signboard (Mobile + Desktop) */}
       <div className="absolute top-11 sm:top-14 right-2 sm:right-4 left-2 sm:left-auto flex justify-end pointer-events-none">
-        <div className="pointer-events-auto animate-toast-drop w-full max-w-md sm:w-[410px] rounded-2xl bg-[#0B101E]/98 border-2 border-amber-500/55 shadow-[0_18px_50px_rgba(0,0,0,0.85)] overflow-hidden">
+        <div className="pointer-events-auto animate-toast-drop w-full max-w-md sm:w-[420px] rounded-2xl bd-signboard overflow-hidden">
+          <div className="h-2 w-full bd-awning-stripe" />
           {/* Header */}
-          <div className="flex items-center justify-between px-3.5 py-2.5 bg-gradient-to-r from-amber-500/15 via-slate-900 to-slate-900 border-b border-slate-800">
+          <div className="flex items-center justify-between px-3.5 py-2.5 bg-gradient-to-r from-emerald-950/70 via-[#0d1c16] to-amber-950/40 border-b border-amber-500/30">
             <div className="flex items-center gap-2">
-              <span className="font-arcade text-base text-amber-400 tracking-wider leading-none">
-                COMMAND
+              <span className="text-base leading-none">🏮</span>
+              <span className="text-xs sm:text-sm font-black text-amber-200">
+                চান্দা বাজার • দোকান মেনু
               </span>
-              <span className="text-xs sm:text-sm font-bold text-white">সিটি কমান্ড মেনু</span>
             </div>
             <button
               onClick={() => {
                 soundManager.playDialogueBlip(0.95);
                 onClose();
               }}
-              className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] sm:text-xs font-bold flex items-center gap-1 cursor-pointer"
+              className="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-500/35 text-amber-200 text-[10px] sm:text-xs font-bold flex items-center gap-1 cursor-pointer"
             >
               <X className="w-3.5 h-3.5 text-amber-400" />
               <span>বন্ধ</span>

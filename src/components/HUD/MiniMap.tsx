@@ -44,7 +44,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({ onOpenFullMap }) => {
 
   return (
     <div
-      className="relative w-24 h-24 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-2xl overflow-hidden border border-slate-700 bg-[#0B101E]/95 shadow-2xl select-none group"
+      className="relative w-24 h-24 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-2xl overflow-hidden bd-signboard select-none group"
       style={{ borderColor: wantedStars > 0 ? '#ef4444' : undefined }}
     >
       {/* Clickable radar surface to open full map */}
@@ -189,9 +189,9 @@ export const MiniMap: React.FC<MiniMapProps> = ({ onOpenFullMap }) => {
       </div>
 
       {/* Header Tag */}
-      <div className="hidden sm:flex absolute top-1.5 left-2 pointer-events-none items-center gap-1 text-[10px] font-bold text-amber-300 bg-slate-950/80 px-1.5 py-0.5 rounded-md">
+      <div className="hidden sm:flex absolute top-1.5 left-2 pointer-events-none items-center gap-1 text-[10px] font-bold text-amber-300 bg-[#0c1c15]/90 border border-amber-400/40 px-1.5 py-0.5 rounded-md">
         <MapPin className="w-2.5 h-2.5 text-amber-400" />
-        <span>চান্দা সিটি</span>
+        <span>চান্দা বাজার</span>
       </div>
 
       {/* Zoom Controls */}

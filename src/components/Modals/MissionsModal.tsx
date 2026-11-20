@@ -14,47 +14,58 @@ export const MissionsModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90">
-      <div className="relative w-full max-w-2xl rounded-3xl bg-[#0B101E] border-2 border-amber-500/60 shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]">
+      <div className="relative w-full max-w-2xl rounded-3xl bd-signboard overflow-hidden flex flex-col max-h-[90dvh]">
+        <div className="h-2 w-full bd-awning-stripe shrink-0" />
         {/* Header */}
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-600/30 to-slate-900 border-b border-slate-800">
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-950/75 via-[#0d1c16] to-amber-950/35 border-b border-amber-500/35">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-slate-950 font-black text-xl">
+            <div className="w-10 h-10 rounded-xl bg-amber-400 flex items-center justify-center text-slate-950 font-black text-xl shadow">
               📜
             </div>
             <div>
-              <h2 className="font-bold text-white text-base sm:text-lg leading-tight">
-                শহরের মিশন ও অগ্রগতি (Missions & Progression)
+              <h2 className="font-bold text-amber-100 text-base sm:text-lg leading-tight">
+                কাজের খাতা ও শহরের মিশন
               </h2>
-              <div className="text-xs text-slate-400">
-                Complete quests to earn Taka, XP and unlock new city perks
+              <div className="text-xs text-amber-200/75">
+                মিশন সম্পন্ন করে টাকা, XP ও বাজারের নতুন ক্ষমতা আনলক করুন
               </div>
             </div>
           </div>
           <button
             onClick={closeModal}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all"
+            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-amber-500/35 text-amber-200 hover:text-white transition-all"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Level Progression Banner */}
-        <div className="m-4 p-4 rounded-2xl bg-gradient-to-r from-slate-950 to-amber-950/40 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="m-4 p-4 rounded-2xl bg-gradient-to-r from-[#0e1b16] to-amber-950/45 border border-amber-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex flex-col items-center justify-center font-black shadow">
+            <div className="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 flex flex-col items-center justify-center font-black shadow tabular-nums">
               <span className="text-[10px] uppercase leading-none">Level</span>
               <span className="text-xl leading-none">{playerStats.level}</span>
             </div>
             <div>
-              <div className="font-bold text-white text-base">{currentLevelInfo?.titleBn}</div>
-              <div className="text-xs text-amber-400">অর্জিত সুবিধা: {currentLevelInfo?.perk}</div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-black text-amber-300 text-sm sm:text-base">
+                  {playerStats.name}
+                </span>
+                <span className="text-xs text-amber-200/70">•</span>
+                <span className="font-bold text-white text-sm sm:text-base">
+                  {currentLevelInfo?.titleBn}
+                </span>
+              </div>
+              <div className="text-xs text-amber-300/90 mt-0.5">
+                অর্জিত সুবিধা: {currentLevelInfo?.perk}
+              </div>
             </div>
           </div>
 
           {nextLevelInfo && (
-            <div className="text-left sm:text-right text-xs">
-              <div className="text-slate-400">পরবর্তী লেভেল: {nextLevelInfo.titleBn}</div>
-              <div className="font-bold text-slate-200 mt-0.5">
+            <div className="text-left sm:text-right text-xs tabular-nums">
+              <div className="text-amber-200/75">পরবর্তী লেভেল: {nextLevelInfo.titleBn}</div>
+              <div className="font-bold text-amber-100 mt-0.5">
                 প্রয়োজনীয় XP: {playerStats.xp} / {nextLevelInfo.reqXp}
               </div>
             </div>

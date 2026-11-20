@@ -50,47 +50,48 @@ export const InventoryModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90">
-      <div className="relative w-full max-w-xl rounded-3xl bg-[#0B101E] border-2 border-cyan-500/60 shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]">
+      <div className="relative w-full max-w-xl rounded-3xl bd-signboard overflow-hidden flex flex-col max-h-[90dvh]">
+        <div className="h-2 w-full bd-awning-stripe shrink-0" />
         {/* Header */}
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-600/25 to-slate-900 border-b border-slate-800">
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-950/70 via-[#0d1c16] to-slate-900 border-b border-amber-500/30">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500 flex items-center justify-center text-slate-950 font-black">
+            <div className="w-10 h-10 rounded-xl bg-amber-400 flex items-center justify-center text-slate-950 font-black shadow">
               <Backpack className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-bold text-white text-base sm:text-lg leading-tight">
-                পকেট ও ব্যাগ (Inventory)
+              <h2 className="font-bold text-amber-100 text-base sm:text-lg leading-tight">
+                টং দোকান ও পকেট ঝুলি (Inventory)
               </h2>
-              <div className="text-xs text-slate-400">
-                চা-সিঙ্গারা ব্যবহার করুন ও শহরের স্মারক সংগ্রহে রাখুন
+              <div className="text-xs text-amber-200/75">
+                গরম চা-সিঙ্গারা নিন ও শহরের স্মারক সংগ্রহে রাখুন
               </div>
             </div>
           </div>
           <button
             onClick={closeModal}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-amber-500/35 text-amber-200 hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Quick Street Vendor Supply */}
-        <div className="p-4 mx-4 mt-4 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col gap-2">
-          <div className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+        {/* Quick Tong Stall Supply */}
+        <div className="relative overflow-hidden p-4 mx-4 mt-4 rounded-2xl bg-[#112119]/90 border border-amber-500/40 flex flex-col gap-2">
+          <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
             <ShoppingBag className="w-4 h-4" />
-            <span>তাৎক্ষণিক নাস্তা অর্ডার (Quick Supply)</span>
+            <span>কালাম মামার টং থেকে তাৎক্ষণিক চা-সিঙ্গারা</span>
           </div>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => handleBuySnack('inv_malai_cha', 40)}
-              className="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-amber-300 flex items-center justify-between"
+              className="flex-1 py-2 px-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-amber-500/35 text-xs font-bold text-amber-300 flex items-center justify-between"
             >
               <span>☕ মালাই চা</span>
               <span className="tabular-nums">৳40</span>
             </button>
             <button
               onClick={() => handleBuySnack('inv_samosa_plate', 65)}
-              className="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-emerald-300 flex items-center justify-between"
+              className="flex-1 py-2 px-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-emerald-500/35 text-xs font-bold text-emerald-300 flex items-center justify-between"
             >
               <span>🥟 গরম সিঙ্গারা</span>
               <span className="tabular-nums">৳65</span>
